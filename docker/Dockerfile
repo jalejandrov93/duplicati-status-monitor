@@ -1,63 +1,53 @@
-# Dockerfile para Duplicati Backup Monitor
-# Multi-stage build optimizado para Next.js 16
+# Dockerfile optimizado para Next.js con modo standalone
+FROM node:22-alpine AS base
+
+# Configuración básica de pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
 # Stage 1: Instalación de dependencias
-FROM node:24-alpine AS deps
-
-# Instalar pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
+FROM base AS deps
+# check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copiar archivos de dependencias
 COPY package.json pnpm-lock.yaml ./
 
-# Instalar solo dependencias de producción
-RUN pnpm install --frozen-lockfile --prod
+# Instalar dependencias usando cache de pnpm para acelerar builds subsecuentes
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Stage 2: Build de la aplicación
-FROM node:24-alpine AS builder
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
+FROM base AS builder
 WORKDIR /app
 
-# Copiar dependencias instaladas
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json pnpm-lock.yaml ./
-
-# Instalar todas las dependencias (incluyendo dev)
-RUN pnpm install --frozen-lockfile
-
-# Copiar código fuente
 COPY . .
 
-# Variables de entorno necesarias para el build
+# Deshabilitar telemetría durante el build
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
 
-# Build de Next.js
+# Build del proyecto
 RUN pnpm build
 
 # Stage 3: Imagen de producción
-FROM node:20-alpine AS runner
-
+FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Crear usuario no-root
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Copiar archivos necesarios del builder
+# Copiar archivos públicos (Asegúrate de ejecutar el build desde la raíz para que esto funciones)
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
 
-# Cambiar ownership a usuario nextjs
-RUN chown -R nextjs:nodejs /app
+# Copiar salida standalone
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
@@ -66,5 +56,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Comando de inicio
 CMD ["node", "server.js"]
