@@ -9,7 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BackupHistoryTable } from "@/components/backup-history-table";
 import { BackupCharts } from "@/components/backup-charts";
-import { ArrowLeft, HardDrive, CheckCircle2, AlertCircle, Activity } from "lucide-react";
+import {
+  ArrowLeft,
+  HardDrive,
+  CheckCircle2,
+  AlertCircle,
+  Activity,
+} from "lucide-react";
 import { getStatusColor, formatBytes, getHealthScoreColor } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -32,7 +38,9 @@ interface MachineDetailData {
   totalFilesProcessed: number;
 }
 
-async function fetchMachineDetails(machineName: string): Promise<MachineDetailData> {
+async function fetchMachineDetails(
+  machineName: string,
+): Promise<MachineDetailData> {
   const res = await fetch(`/api/machines/${encodeURIComponent(machineName)}`, {
     cache: "no-store",
   });
@@ -124,7 +132,9 @@ const QuotaCard = memo(function QuotaCard({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold mb-2">{quotaValue.toFixed(1)}%</div>
+          <div className="text-2xl font-bold mb-2">
+            {quotaValue?.toFixed(1) ?? 0}%
+          </div>
           <Progress value={quotaValue} max={100} />
           <p className="text-xs text-muted-foreground mt-2">
             {formatBytes(usedSpace * 1024 * 1024)} de{" "}
@@ -136,7 +146,11 @@ const QuotaCard = memo(function QuotaCard({
   );
 });
 
-const ErrorDetails = memo(function ErrorDetails({ latestBackup }: { latestBackup: any }) {
+const ErrorDetails = memo(function ErrorDetails({
+  latestBackup,
+}: {
+  latestBackup: any;
+}) {
   if (!latestBackup.HasErrors) return null;
 
   return (
@@ -175,15 +189,23 @@ const ErrorDetails = memo(function ErrorDetails({ latestBackup }: { latestBackup
           )}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t">
             <div>
-              <p className="text-sm text-muted-foreground">Contador de Errores</p>
+              <p className="text-sm text-muted-foreground">
+                Contador de Errores
+              </p>
               <p className="text-lg font-semibold text-red-600 dark:text-red-400">
-                {!isNaN(latestBackup.ErrorsCount) ? latestBackup.ErrorsCount : "N/A"}
+                {!isNaN(latestBackup.ErrorsCount)
+                  ? latestBackup.ErrorsCount
+                  : "N/A"}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Intentos de Reintentos</p>
+              <p className="text-sm text-muted-foreground">
+                Intentos de Reintentos
+              </p>
               <p className="text-lg font-semibold">
-                {!isNaN(latestBackup.RetryAttempts) ? latestBackup.RetryAttempts : "N/A"}
+                {!isNaN(latestBackup.RetryAttempts)
+                  ? latestBackup.RetryAttempts
+                  : "N/A"}
               </p>
             </div>
           </div>
@@ -232,7 +254,9 @@ export default function MachineDetailPage({
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando detalles de la máquina...</p>
+          <p className="text-muted-foreground">
+            Cargando detalles de la máquina...
+          </p>
         </div>
       </div>
     );
@@ -252,7 +276,9 @@ export default function MachineDetailPage({
 
   const healthScore = !isNaN(data.healthScore) ? data.healthScore : 0;
   const totalBackups = !isNaN(data.totalBackups) ? data.totalBackups : 0;
-  const successRate = !isNaN(data.successRate) ? data.successRate.toFixed(1) : "0.0";
+  const successRate = !isNaN(data.successRate)
+    ? data.successRate.toFixed(1)
+    : "0.0";
   const averageSize = !isNaN(data.averageSize) ? data.averageSize : 0;
 
   return (
@@ -265,7 +291,11 @@ export default function MachineDetailPage({
         className="border-b bg-card"
       >
         <div className="container mx-auto px-4 py-6">
-          <Button variant="default" onClick={handleBack} className="mb-4 cursor-pointer">
+          <Button
+            variant="default"
+            onClick={handleBack}
+            className="mb-4 cursor-pointer"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver al Panel
           </Button>
@@ -295,7 +325,12 @@ export default function MachineDetailPage({
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <MetricCard
             title="Puntuación de Salud"
-            icon={<Activity className="w-8 h-8" style={{ color: healthColors.color }} />}
+            icon={
+              <Activity
+                className="w-8 h-8"
+                style={{ color: healthColors.color }}
+              />
+            }
             value={healthScore}
             subtitle={healthColors.label}
             index={0}
