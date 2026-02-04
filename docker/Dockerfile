@@ -1,28 +1,24 @@
 # Dockerfile optimizado para Next.js con modo standalone
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 
-# Configuración básica de pnpm
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
-
-# Stage 1: Instalación de dependencias
-FROM base AS deps
-# check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copiar archivos de dependencias
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+
+# --- Dependencias ---
+FROM base AS dependencies
+
+# Copiar archivos de configuración del package manager
 COPY package.json pnpm-lock.yaml ./
 
-# Instalar dependencias usando cache de pnpm para acelerar builds subsecuentes
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+# Instalar TODAS las dependencias (incluyendo devDependencies para el build)
+RUN pnpm install --frozen-lockfile
 
 # Stage 2: Build de la aplicación
 FROM base AS builder
-WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
 # Deshabilitar telemetría durante el build
