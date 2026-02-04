@@ -1,0 +1,52 @@
+# Dependencias
+node_modules
+npm-debug.log
+pnpm-debug.log
+yarn-error.log
+
+# Next.js
+.next
+out
+dist
+
+# Entorno
+.env
+.env.local
+.env*.local
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+.DS_Store
+*.pem
+.eslintcache
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentación
+README.md
+CLAUDE.md
+OPTIMIZACIONES.md
+docs/
+
+# Scripts de prueba
+scripts/test-*.js
+scripts/demo.js
+scripts/diagnostico-completo.js
+test.js
+mongo.py
