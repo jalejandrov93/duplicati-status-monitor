@@ -2,7 +2,7 @@
 # Multi-stage build optimizado para Next.js 16
 
 # Stage 1: Instalación de dependencias
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 # Instalar pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -16,7 +16,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod
 
 # Stage 2: Build de la aplicación
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
