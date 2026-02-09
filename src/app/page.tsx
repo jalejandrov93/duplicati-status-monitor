@@ -7,7 +7,6 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { MachineStatus, GlobalStats } from "@/types/backup";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
-import PixelBlast from "@/components/PixelBlast";
 
 async function fetchMachines(): Promise<MachineStatus[]> {
   const res = await fetch("/api/machines", { cache: "no-store" });
@@ -123,7 +122,7 @@ export default function HomePage() {
           </div>
         )}
       </main>
-      
+
     </div>
   );
 }
