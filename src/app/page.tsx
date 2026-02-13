@@ -4,9 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MachineCard } from "@/components/machine-card";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { DashboardStats } from "@/components/dashboard-stats";
 import { MachineStatus, GlobalStats } from "@/types/backup";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
 
 async function fetchMachines(): Promise<MachineStatus[]> {
   const res = await fetch("/api/machines", { cache: "no-store" });
@@ -31,11 +33,13 @@ export default function HomePage() {
   } = useQuery({
     queryKey: ["machines"],
     queryFn: fetchMachines,
+    refetchInterval: 60000,
   });
 
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ["stats"],
     queryFn: fetchStats,
+    refetchInterval: 60000,
   });
 
   const handleRefresh = () => {
@@ -80,7 +84,8 @@ export default function HomePage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
+      <BackgroundRippleEffect cols={30} rows={15} />
       <DashboardHeader
         stats={stats}
         isRefreshing={machinesLoading}
@@ -89,7 +94,7 @@ export default function HomePage() {
         onSearchChange={setSearchTerm}
       />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-4">
         {machinesLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -97,10 +102,12 @@ export default function HomePage() {
         ) : filteredMachines && filteredMachines.length > 0 ? (
           <>
             {/* Real-time update indicator */}
-            <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow" />
-              <span>Auto-actualización cada 15 segundos</span>
+            <div className="mb-4 flex items-center justify-end gap-2 text-xs text-muted-foreground z-20">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span>Actualizando cada 60s</span>
             </div>
+
+            <DashboardStats stats={stats} />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredMachines.map((machine, index) => (

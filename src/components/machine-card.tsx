@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import GlareHover from "@/components/GlareHover";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 
 interface MachineCardProps {
   machine: MachineStatus;
@@ -153,9 +153,12 @@ export function MachineCard({ machine, index }: MachineCardProps) {
                   </motion.div>
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-base text-foreground truncate leading-tight">
-                      {machine.machineName}
-                    </h3>
+                    <EncryptedText
+                      text={machine.machineName}
+                      encryptedClassName="text-neutral-500"
+                      revealedClassName="dark:text-white text-black"
+                      revealDelayMs={50}
+                    />
                     <p className="text-xs text-muted-foreground truncate">
                       {machine.totalBackups} sesiones de respaldo
                     </p>

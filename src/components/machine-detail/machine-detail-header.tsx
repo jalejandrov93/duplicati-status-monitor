@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeInVariants } from "@/lib/animation-variants";
 import type { StatusBadgeVariant } from "@/types/machine";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 
 export interface MachineDetailHeaderProps {
     machineName: string;
@@ -47,9 +48,12 @@ export const MachineDetailHeader = memo(function MachineDetailHeader({
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            {machineName}
-                        </h1>
+                        <EncryptedText
+                            text={machineName}
+                            encryptedClassName="text-neutral-500"
+                            revealedClassName="dark:text-white text-black"
+                            revealDelayMs={50}
+                        />
                         <p className="text-sm text-muted-foreground mt-1">
                             Último respaldo: {relativeEndTime || "N/A"}
                         </p>
