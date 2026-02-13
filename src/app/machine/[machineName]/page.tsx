@@ -86,7 +86,7 @@ export default function MachineDetailPage({
       <main className="container mx-auto px-4 py-8">
         {/* Key Metrics */}
         <div
-          className={`grid grid-cols-1 gap-6 md:grid-cols-2 mb-8 ${showQuota ? "lg:grid-cols-4" : "lg:grid-cols-3"
+          className={`grid grid-cols-2 gap-6 mb-8 ${showQuota ? "lg:grid-cols-4" : "lg:grid-cols-3"
             }`}
         >
           <MachineMetricCard

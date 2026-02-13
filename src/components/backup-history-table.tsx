@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { BackupHistoryResponse, BackupDocument } from "@/types/backup";
 import { formatBytes } from "@/lib/utils";
 import { format } from "date-fns";
-import { ChevronDown, ChevronRight, Download, ArrowUpDown } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronLeft, Download, ArrowUpDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface BackupHistoryTableProps {
@@ -210,10 +210,10 @@ export const BackupHistoryTable = memo(function BackupHistoryTable({
               row.original.Status === "SUCCESS"
                 ? "success"
                 : row.original.Status === "WARNING"
-                ? "warning"
-                : row.original.Status === "ERROR"
-                ? "error"
-                : "default"
+                  ? "warning"
+                  : row.original.Status === "ERROR"
+                    ? "error"
+                    : "default"
             }
           >
             {row.original.Status}
@@ -352,9 +352,9 @@ export const BackupHistoryTable = memo(function BackupHistoryTable({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </th>
                     ))}
                   </tr>
@@ -414,23 +414,25 @@ export const BackupHistoryTable = memo(function BackupHistoryTable({
 
             <div className="flex gap-2">
               <Button
-                variant="outline"
+                variant="ghost"
+                className=""
                 size="sm"
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
               >
-                Anterior
+                <ChevronLeft />
               </Button>
               <span className="flex items-center px-3 text-sm font-medium">
                 Página {page} de {data.totalPages}
               </span>
               <Button
-                variant="outline"
+                variant="ghost"
+                className=""
                 size="sm"
                 onClick={() => setPage(page + 1)}
                 disabled={page >= data.totalPages}
               >
-                Siguiente
+                <ChevronRight />
               </Button>
             </div>
           </div>

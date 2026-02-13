@@ -9,6 +9,7 @@ import { MachineStatus, GlobalStats } from "@/types/backup";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
+import { Logo } from "@/components/ui/logo";
 
 async function fetchMachines(): Promise<MachineStatus[]> {
   const res = await fetch("/api/machines", { cache: "no-store" });
@@ -129,7 +130,9 @@ export default function HomePage() {
           </div>
         )}
       </main>
-
+      <footer className="fixed bottom-0 left-0 px-4 py-4">
+        <Logo />
+      </footer>
     </div>
   );
 }

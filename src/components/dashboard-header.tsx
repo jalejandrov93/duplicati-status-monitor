@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { GlobalStats } from "@/types/backup";
 import { useTheme } from "next-themes";
 import { format } from "date-fns";
-
 interface DashboardHeaderProps {
   stats: GlobalStats | undefined;
   isRefreshing: boolean;
@@ -28,6 +27,7 @@ export function DashboardHeader({
     <div className="sticky top-0 z-20 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo / Title */}
+
         <div className="flex flex-col">
           <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
             Monitor Duplicati
@@ -48,7 +48,7 @@ export function DashboardHeader({
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-9 h-9 w-full bg-background"
+              className="pl-9 h-9 w-full bg-background rounded-full"
             />
           </div>
         </div>

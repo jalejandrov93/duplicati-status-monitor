@@ -33,6 +33,7 @@ const getStatusConfig = (status: string) => {
         bgColor: "bg-green-500/5",
         Icon: CheckCircle2,
         label: "Operacional",
+        shadowColor: "shadow-green-500", // glowColor matches green-500 more naturally for shadow class
       };
     case "WARNING":
       return {
@@ -42,6 +43,7 @@ const getStatusConfig = (status: string) => {
         bgColor: "bg-yellow-500/5",
         Icon: AlertTriangle,
         label: "Advertencia",
+        shadowColor: "shadow-yellow-500",
       };
     case "ERROR":
       return {
@@ -51,6 +53,7 @@ const getStatusConfig = (status: string) => {
         bgColor: "bg-red-500/5",
         Icon: XCircle,
         label: "Crítico",
+        shadowColor: "shadow-red-500",
       };
     default:
       return {
@@ -60,6 +63,7 @@ const getStatusConfig = (status: string) => {
         bgColor: "bg-gray-500/5",
         Icon: Activity,
         label: "Desconocido",
+        shadowColor: "shadow-gray-500",
       };
   }
 };
@@ -88,14 +92,15 @@ export function MachineCard({ machine, index }: MachineCardProps) {
     >
       <Link href={`/machine/${encodeURIComponent(machine.machineName)}`}>
 
-        <div className="group relative h-full w-full transition-all duration-300 ease-out">
+        <div className="group relative h-full w-full transition-all duration-300 ease-out ">
           <div
             className={cn(
               "relative overflow-hidden rounded-3xl",
               "border-2 transition-all duration-500",
               statusConfig.borderColor,
               "bg-card",
-              "shadow-lg hover:shadow-2xl"
+              "shadow hover:shadow-lg",
+              statusConfig.shadowColor
             )}
           >
             {/* Gradient Background Overlay */}
@@ -123,7 +128,7 @@ export function MachineCard({ machine, index }: MachineCardProps) {
                       statusConfig.bgColor,
                       "border-2",
                       statusConfig.borderColor,
-                      "shadow-md"
+                      "shadow"
                     )}
                   >
                     <Activity
@@ -155,8 +160,8 @@ export function MachineCard({ machine, index }: MachineCardProps) {
                   <div className="min-w-0 flex-1">
                     <EncryptedText
                       text={machine.machineName}
-                      encryptedClassName="text-neutral-500"
-                      revealedClassName="dark:text-white text-black"
+                      encryptedClassName="text-neutral-500 truncate"
+                      revealedClassName="dark:text-white text-black truncate"
                       revealDelayMs={50}
                     />
                     <p className="text-xs text-muted-foreground truncate">

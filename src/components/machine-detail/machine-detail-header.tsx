@@ -46,7 +46,7 @@ export const MachineDetailHeader = memo(function MachineDetailHeader({
                     Volver al Panel
                 </Button>
 
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex gap-4 flex-row items-center justify-between">
                     <div>
                         <EncryptedText
                             text={machineName}
