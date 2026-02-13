@@ -1,4 +1,4 @@
-name: Build and Publish Docker Image
+name: Build Docker Image
 
 on:
   push:
@@ -52,37 +52,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Deploy to server via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script: |
-            set -e
-            cd backup_duplicati
-
-            echo "🔄 Pulling latest images..."
-            docker compose pull 2>&1
-
-            echo "🚀 Starting services..."
-            docker compose up -d 2>&1
-
-            echo "🧹 Cleaning up unused images..."
-            docker image prune -f 2>&1
-
-            echo "✅ Deployment completed successfully!"
-
-            echo "📊 Service status:"
-            docker compose ps
-
-            echo "🏥 Health check:"
-            docker compose exec duplicati-monitor node -e "require('http').get('http://localhost:3000/api/stats', (r) => {console.log('Status:', r.statusCode)})" || echo "Health check will run after container is fully started"

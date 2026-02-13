@@ -1,8 +1,6 @@
 services:
   duplicati-monitor:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/jalejandrov93/backup-duplicati:master
     container_name: duplicati-backup-monitor
     ports:
       - "8191:3000"
