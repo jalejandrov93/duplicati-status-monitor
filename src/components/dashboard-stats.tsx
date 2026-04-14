@@ -43,7 +43,7 @@ export function DashboardStats({ stats, onFilterClick, activeFilter }: Dashboard
                 {/* Total Machines */}
                 <button
                     onClick={() => handleFilterClick("all")}
-                    className={`flex items-center gap-3 rounded-xl bg-blue-100 dark:bg-blue-900/80 p-4 text-card-foreground shadow-sm transition-all hover:scale-105 cursor-pointer ${
+                    className={`relative flex items-center gap-3 rounded-xl bg-blue-100 dark:bg-blue-900/80 p-4 text-card-foreground shadow-sm transition-all hover:scale-105 cursor-pointer ${
                         isActive("all") ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-background" : ""
                     }`}
                 >
@@ -59,7 +59,7 @@ export function DashboardStats({ stats, onFilterClick, activeFilter }: Dashboard
                 {/* Successful */}
                 <button
                     onClick={() => handleFilterClick("success")}
-                    className={`flex items-center gap-3 rounded-xl p-4 text-card-foreground bg-green-100 dark:bg-green-900/80 shadow-sm transition-all hover:scale-105 cursor-pointer ${
+                    className={`relative flex items-center gap-3 rounded-xl p-4 text-card-foreground bg-green-100 dark:bg-green-900/80 shadow-sm transition-all hover:scale-105 cursor-pointer ${
                         isActive("success") ? "ring-2 ring-green-500 ring-offset-2 dark:ring-offset-background" : ""
                     }`}
                 >
@@ -79,7 +79,7 @@ export function DashboardStats({ stats, onFilterClick, activeFilter }: Dashboard
                 {/* Warnings */}
                 <button
                     onClick={() => handleFilterClick("warning")}
-                    className={`flex items-center gap-3 rounded-xl p-4 text-card-foreground bg-yellow-100 dark:bg-yellow-900/80 shadow-sm transition-all hover:scale-105 cursor-pointer ${
+                    className={`relative flex items-center gap-3 rounded-xl p-4 text-card-foreground bg-yellow-100 dark:bg-yellow-900/80 shadow-sm transition-all hover:scale-105 cursor-pointer ${
                         isActive("warning") ? "ring-2 ring-yellow-500 ring-offset-2 dark:ring-offset-background" : ""
                     }`}
                 >
@@ -99,7 +99,7 @@ export function DashboardStats({ stats, onFilterClick, activeFilter }: Dashboard
                 {/* Errors */}
                 <button
                     onClick={() => handleFilterClick("error")}
-                    className={`flex items-center gap-3 rounded-xl p-4 text-card-foreground bg-red-100 dark:bg-red-900/80 shadow-sm transition-all hover:scale-105 cursor-pointer ${
+                    className={`relative flex items-center gap-3 rounded-xl p-4 text-card-foreground bg-red-100 dark:bg-red-900/80 shadow-sm transition-all hover:scale-105 cursor-pointer ${
                         isActive("error") ? "ring-2 ring-red-500 ring-offset-2 dark:ring-offset-background" : ""
                     }`}
                 >
