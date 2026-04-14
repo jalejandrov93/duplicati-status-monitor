@@ -6,6 +6,7 @@ import { MachineCard } from "@/components/machine-card";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardStats } from "@/components/dashboard-stats";
 import { MachineStatus, GlobalStats } from "@/types/backup";
+import { StatusFilter } from "@/components/dashboard-stats";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
@@ -25,6 +26,7 @@ async function fetchStats(): Promise<GlobalStats> {
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter | null>(null);
   const hasShownNotificationsRef = useRef(false);
 
   const {
@@ -79,10 +81,18 @@ export default function HomePage() {
     }
   }, [machines]);
 
-  // Filter machines based on search
-  const filteredMachines = machines?.filter((machine) =>
-    machine.machineName.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // Filter machines based on search and status
+  const filteredMachines = machines?.filter((machine) => {
+    const matchesSearch = machine.machineName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!statusFilter || statusFilter === "all") return matchesSearch;
+    
+    return matchesSearch && (
+      statusFilter === "success" ? machine.latestBackup.Status === "SUCCESS" :
+      statusFilter === "warning" ? ["WARNING", "PARTIAL"].includes(machine.latestBackup.Status) :
+      statusFilter === "error" ? machine.latestBackup.Status === "ERROR" : true
+    );
+  });
 
   return (
     <div className="min-h-screen">
@@ -108,7 +118,7 @@ export default function HomePage() {
               <span>Actualizando cada 60s</span>
             </div>
 
-            <DashboardStats stats={stats} />
+            <DashboardStats stats={stats} onFilterClick={setStatusFilter} activeFilter={statusFilter} />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredMachines.map((machine, index) => (

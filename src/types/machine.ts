@@ -43,3 +43,25 @@ export interface BackupRecord {
 export type BackupStatus = "SUCCESS" | "WARNING" | "ERROR" | "PARTIAL";
 
 export type StatusBadgeVariant = "success" | "warning" | "error" | "default";
+
+export type DuplicatiErrorType =
+    | "MISSING_FILES"
+    | "CORRUPTED_FILES"
+    | "PERMISSION_DENIED"
+    | "ENCRYPTION_ERROR"
+    | "TIMEOUT"
+    | "CONNECTION_ERROR"
+    | "DISK_FULL"
+    | "DATABASE_CORRUPT"
+    | "UNKNOWN";
+
+export interface ParsedErrorInfo {
+    errorType: DuplicatiErrorType;
+    errorTitle: string;
+    errorDescription: string;
+    suggestedCommand: string;
+    suggestedAction: string;
+    isRepairable: boolean;
+    missingFiles?: string[];
+    warningCount?: number;
+}

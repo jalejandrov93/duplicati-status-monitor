@@ -12,11 +12,16 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
+  Database,
+  Lock,
+  WifiOff,
+  Key,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { EncryptedText } from "@/components/ui/encrypted-text";
+import { parseDuplicatiError, getErrorTypeConfig } from "@/lib/error-parser";
 
 interface MachineCardProps {
   machine: MachineStatus;
@@ -78,6 +83,11 @@ export function MachineCard({ machine, index }: MachineCardProps) {
   const statusConfig = getStatusConfig(machine.latestBackup.Status);
   const StatusIcon = statusConfig.Icon;
   const healthColor = getHealthColor(machine.healthScore);
+
+  // Parsear error si hay errores
+  const hasErrors = machine.latestBackup.HasErrors && machine.latestBackup.Exception;
+  const parsedError = hasErrors ? parseDuplicatiError(machine.latestBackup.Exception!, machine.latestBackup.LogLines) : null;
+  const errorConfig = parsedError ? getErrorTypeConfig(parsedError.errorType) : null;
 
   return (
     <motion.div
@@ -184,6 +194,48 @@ export function MachineCard({ machine, index }: MachineCardProps) {
 
                 </Badge>
               </div>
+
+              {/* Error Type Indicator - solo mostrar si hay errores */}
+              {hasErrors && errorConfig && parsedError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  transition={{ duration: 0.3 }}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg text-xs",
+                    errorConfig.bgColor,
+                    "border",
+                    errorConfig.borderColor
+                  )}
+                >
+                  {parsedError.errorType === "MISSING_FILES" && (
+                    <Database className={cn("w-4 h-4", errorConfig.iconColor)} />
+                  )}
+                  {parsedError.errorType === "PERMISSION_DENIED" && (
+                    <Lock className={cn("w-4 h-4", errorConfig.iconColor)} />
+                  )}
+                  {parsedError.errorType === "CONNECTION_ERROR" && (
+                    <WifiOff className={cn("w-4 h-4", errorConfig.iconColor)} />
+                  )}
+                  {parsedError.errorType === "ENCRYPTION_ERROR" && (
+                    <Key className={cn("w-4 h-4", errorConfig.iconColor)} />
+                  )}
+                  {parsedError.errorType !== "MISSING_FILES" &&
+                    parsedError.errorType !== "PERMISSION_DENIED" &&
+                    parsedError.errorType !== "CONNECTION_ERROR" &&
+                    parsedError.errorType !== "ENCRYPTION_ERROR" && (
+                      <XCircle className={cn("w-4 h-4", errorConfig.iconColor)} />
+                    )}
+                  <span className={cn("font-medium", errorConfig.iconColor)}>
+                    {parsedError.errorTitle}
+                  </span>
+                  {parsedError.missingFiles && parsedError.missingFiles.length > 0 && (
+                    <span className="ml-auto text-muted-foreground">
+                      {parsedError.missingFiles.length} archivos
+                    </span>
+                  )}
+                </motion.div>
+              )}
 
               {/* Divider */}
               <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />

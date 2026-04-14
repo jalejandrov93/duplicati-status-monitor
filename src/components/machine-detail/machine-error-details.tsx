@@ -2,10 +2,39 @@
 
 import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import {
+    AlertCircle,
+    AlertTriangle,
+    Database,
+    FileX,
+    Lock,
+    Key,
+    Clock,
+    WifiOff,
+    HardDrive,
+    HelpCircle,
+    Terminal,
+    ArrowRight,
+    RefreshCw,
+    CheckCircle2,
+    XCircle,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeUpVariants } from "@/lib/animation-variants";
+import { parseDuplicatiError, getErrorTypeConfig, formatMissingFilesList } from "@/lib/error-parser";
 import type { LatestBackup } from "@/types/machine";
+import { cn } from "@/lib/utils";
+
+const iconMap: Record<string, typeof AlertCircle> = {
+    database: Database,
+    "file-x": FileX,
+    lock: Lock,
+    key: Key,
+    clock: Clock,
+    "wifi-off": WifiOff,
+    "hard-drive": HardDrive,
+    "alert-circle": HelpCircle,
+};
 
 export interface ErrorDetailsProps {
     latestBackup: LatestBackup;
@@ -14,7 +43,19 @@ export interface ErrorDetailsProps {
 export const MachineErrorDetails = memo(function MachineErrorDetails({
     latestBackup,
 }: ErrorDetailsProps) {
-    if (!latestBackup.HasErrors) return null;
+    if (!latestBackup.HasErrors || !latestBackup.Exception) return null;
+
+    // Parsear el error
+    const parsedError = parseDuplicatiError(latestBackup.Exception, latestBackup.LogLines);
+    const errorConfig = getErrorTypeConfig(parsedError.errorType);
+
+    // Obtener el icono según el tipo de error
+    const IconComponent = iconMap[errorConfig.icon] || HelpCircle;
+
+    // Formatear lista de archivos faltantes
+    const missingFilesFormatted = parsedError.missingFiles && parsedError.missingFiles.length > 0
+        ? formatMissingFilesList(parsedError.missingFiles, 15)
+        : null;
 
     return (
         <motion.div
@@ -22,53 +63,157 @@ export const MachineErrorDetails = memo(function MachineErrorDetails({
             animate="visible"
             variants={fadeUpVariants}
         >
-            <Card className="mb-8 border-red-200 dark:border-red-800">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                        <AlertCircle className="w-5 h-5" />
-                        Detalles del Error
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            <Card className={cn(
+                "mb-8 overflow-hidden",
+                errorConfig.borderColor,
+                errorConfig.bgColor
+            )}>
+                {/* Header con color según tipo de error */}
+                <div className={cn(
+                    "px-6 py-4 border-b",
+                    errorConfig.borderColor,
+                    errorConfig.bgColor
+                )}>
+                    <CardHeader className="p-0 flex flex-row items-center gap-3">
+                        <div className={cn(
+                            "p-2 rounded-lg",
+                            errorConfig.bgColor,
+                            "border",
+                            errorConfig.borderColor
+                        )}>
+                            <IconComponent className={cn("w-6 h-6", errorConfig.iconColor)} />
+                        </div>
+                        <div className="flex-1">
+                            <CardTitle className={cn("text-lg", errorConfig.iconColor)}>
+                                {parsedError.errorTitle}
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                {parsedError.errorDescription}
+                            </p>
+                        </div>
+                        {/* Badge del tipo de error */}
+                        <span className={cn(
+                            "px-3 py-1 rounded-full text-sm font-medium",
+                            errorConfig.badgeColor
+                        )}>
+                            {parsedError.errorType.replace(/_/g, " ")}
+                        </span>
+                    </CardHeader>
+                </div>
+
+                <CardContent className="p-6 space-y-6">
+                    {/* Sección de acción sugerida */}
+                    {parsedError.isRepairable && (
+                        <div className={cn(
+                            "p-4 rounded-xl border-2 border-dashed",
+                            errorConfig.borderColor,
+                            errorConfig.bgColor
+                        )}>
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-background shrink-0">
+                                    <Terminal className={cn("w-5 h-5", errorConfig.iconColor)} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-semibold text-foreground flex items-center gap-2">
+                                        <ArrowRight className="w-4 h-4" />
+                                        Acción Sugerida
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        {parsedError.suggestedAction}
+                                    </p>
+                                    {/* Comando sugerido */}
+                                    <div className="mt-3 flex items-center gap-2">
+                                        <code className={cn(
+                                            "flex-1 px-3 py-2 rounded-lg text-sm font-mono",
+                                            "bg-background border",
+                                            errorConfig.borderColor,
+                                            "text-foreground"
+                                        )}>
+                                            duplicati-cli {parsedError.suggestedCommand} [storage-url]
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Mostrar advertencia si hay archivos faltantes */}
+                    {parsedError.warningCount && parsedError.warningCount > 0 && (
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-300 dark:border-yellow-700">
+                            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0" />
+                            <span className="text-sm text-yellow-800 dark:text-yellow-200">
+                                <strong>{parsedError.warningCount}</strong> advertencia(s) encontrada(s) en los logs
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Lista de archivos faltantes */}
+                    {missingFilesFormatted && (
+                        <div>
+                            <h4 className="font-semibold mb-2 flex items-center gap-2">
+                                <Database className="w-4 h-4 text-red-500" />
+                                Archivos Faltantes ({parsedError.missingFiles?.length})
+                            </h4>
+                            <div className={cn(
+                                "p-4 rounded-lg border font-mono text-sm",
+                                "bg-muted/50 max-h-64 overflow-y-auto",
+                                "whitespace-pre-wrap text-muted-foreground"
+                            )}>
+                                {missingFilesFormatted}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Excepción original */}
                     {latestBackup.Exception && (
                         <div>
-                            <h4 className="font-semibold mb-2">Excepción:</h4>
-                            <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
+                            <h4 className="font-semibold mb-2 flex items-center gap-2">
+                                <XCircle className="w-4 h-4 text-red-500" />
+                                Excepción Original
+                            </h4>
+                            <pre className={cn(
+                                "p-4 rounded-lg overflow-x-auto text-xs font-mono",
+                                "bg-muted/80 border border-red-200 dark:border-red-800",
+                                "max-h-48 overflow-y-auto",
+                                "text-red-700 dark:text-red-300"
+                            )}>
                                 {latestBackup.Exception}
                             </pre>
                         </div>
                     )}
-                    {latestBackup.LogLines && latestBackup.LogLines.length > 0 && (
-                        <div>
-                            <h4 className="font-semibold mb-2">Registros de Error:</h4>
-                            <div className="bg-muted p-4 rounded-md max-h-64 overflow-y-auto">
-                                {latestBackup.LogLines.map((log: string, idx: number) => (
-                                    <div key={idx} className="text-sm font-mono mb-1">
-                                        {log}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                        <div>
-                            <p className="text-sm text-muted-foreground">
-                                Contador de Errores
-                            </p>
-                            <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+
+                    {/* Estadísticas del error */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+                        <div className="p-3 rounded-lg bg-muted/30 text-center">
+                            <XCircle className="w-5 h-5 mx-auto mb-1 text-red-500" />
+                            <p className="text-xs text-muted-foreground">Errores</p>
+                            <p className="text-lg font-bold text-red-600 dark:text-red-400">
                                 {latestBackup.ErrorsCount != null && !isNaN(latestBackup.ErrorsCount)
                                     ? latestBackup.ErrorsCount
                                     : "N/A"}
                             </p>
                         </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">
-                                Intentos de Reintentos
-                            </p>
-                            <p className="text-lg font-semibold">
+                        <div className="p-3 rounded-lg bg-muted/30 text-center">
+                            <RefreshCw className="w-5 h-5 mx-auto mb-1 text-orange-500" />
+                            <p className="text-xs text-muted-foreground">Reintentos</p>
+                            <p className="text-lg font-bold">
                                 {latestBackup.RetryAttempts != null && !isNaN(latestBackup.RetryAttempts)
                                     ? latestBackup.RetryAttempts
                                     : "N/A"}
+                            </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/30 text-center">
+                            <AlertTriangle className="w-5 h-5 mx-auto mb-1 text-yellow-500" />
+                            <p className="text-xs text-muted-foreground">Advertencias</p>
+                            <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                                {parsedError.warningCount ?? 0}
+                            </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/30 text-center">
+                            <Database className="w-5 h-5 mx-auto mb-1 text-blue-500" />
+                            <p className="text-xs text-muted-foreground">Archivos Perdidos</p>
+                            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                {parsedError.missingFiles?.length ?? 0}
                             </p>
                         </div>
                     </div>
