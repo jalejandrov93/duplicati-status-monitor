@@ -2,8 +2,9 @@
 
 import { Server, CheckCircle2, AlertTriangle, XCircle, X } from "lucide-react";
 import { GlobalStats } from "@/types/backup";
+import { DashboardStatusFilter } from "@/lib/dashboard-filters";
 
-export type StatusFilter = "all" | "success" | "warning" | "error";
+export type StatusFilter = DashboardStatusFilter;
 
 interface DashboardStatsProps {
     stats: GlobalStats | undefined;

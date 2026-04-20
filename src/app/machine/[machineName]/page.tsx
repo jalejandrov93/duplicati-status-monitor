@@ -11,7 +11,7 @@ import {
   MachineDetailHeader,
 } from "@/components/machine-detail";
 import { HardDrive, CheckCircle2, Activity, AlertCircle } from "lucide-react";
-import { formatBytes, getHealthScoreColor } from "@/lib/utils";
+import { formatCompactNumber, formatSizeFromMB, getHealthScoreColor } from "@/lib/utils";
 import { useMachineDetails } from "@/hooks/use-machine-details";
 import MachineLoader from "@/components/machine-loader";
 import type { StatusBadgeVariant } from "@/types/machine";
@@ -67,11 +67,20 @@ export default function MachineDetailPage({
 
   const healthScore = !isNaN(data.healthScore) ? data.healthScore : 0;
   const totalBackups = !isNaN(data.totalBackups) ? data.totalBackups : 0;
-  const successRate = !isNaN(data.successRate)
-    ? data.successRate.toFixed(1)
-    : "0.0";
+  const successRate = !isNaN(data.successRate) ? data.successRate : 0;
   const averageSize = !isNaN(data.averageSize) ? data.averageSize : 0;
   const showQuota = data.currentQuotaUsage != null;
+  const formattedSuccessRate = new Intl.NumberFormat("es-ES", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(successRate);
+  const formattedTotalBackups = formatCompactNumber(totalBackups);
+  const formattedTotalBackupsExact = new Intl.NumberFormat("es-ES", {
+    maximumFractionDigits: 0,
+  }).format(totalBackups);
+  const formattedSuccessBackupsExact = new Intl.NumberFormat("es-ES", {
+    maximumFractionDigits: 0,
+  }).format(data.statusDistribution.success ?? 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -105,16 +114,16 @@ export default function MachineDetailPage({
           <MachineMetricCard
             title="Respaldos Totales"
             icon={<HardDrive className="w-8 h-8 text-blue-500" />}
-            value={totalBackups}
-            subtitle={`${formatBytes(averageSize * 1024 * 1024)} prom`}
+            value={formattedTotalBackups}
+            subtitle={`${formatSizeFromMB(averageSize)} prom`}
             index={1}
           />
 
           <MachineMetricCard
             title="Tasa de Éxito"
             icon={<CheckCircle2 className="w-8 h-8 text-green-500" />}
-            value={`${successRate}%`}
-            subtitle={`${data.statusDistribution.success} de ${totalBackups}`}
+            value={`${formattedSuccessRate}%`}
+            subtitle={`${formattedSuccessBackupsExact} de ${formattedTotalBackupsExact}`}
             index={2}
           />
 

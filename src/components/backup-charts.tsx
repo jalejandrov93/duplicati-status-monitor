@@ -18,24 +18,26 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { motion } from "framer-motion";
+import {
+  formatCompactNumber,
+  formatDurationFromMinutes,
+  formatSizeFromMB,
+  parseDurationToMinutes,
+} from "@/lib/utils";
+import type { BackupRecord, StatusDistribution } from "@/types/machine";
 
 interface BackupChartsProps {
-  recentBackups: any[];
-  statusDistribution: {
-    success: number;
-    warning: number;
-    error: number;
-    partial: number;
-  };
+  recentBackups: BackupRecord[];
+  statusDistribution: StatusDistribution;
 }
 
 const STATUS_COLORS = {
-  SUCCESS: "#10b981",
-  WARNING: "#f59e0b",
-  ERROR: "#ef4444",
-  PARTIAL: "#3b82f6",
+  SUCCESS: "var(--chart-2)",
+  WARNING: "var(--chart-4)",
+  ERROR: "var(--destructive)",
+  PARTIAL: "var(--chart-1)",
 };
 
 const chartVariants = {
@@ -51,23 +53,19 @@ const chartVariants = {
   }),
 };
 
-function parseDuration(duration: string): number {
-  if (!duration || typeof duration !== "string") return 0;
-  const parts = duration.split(":");
-  if (parts.length === 3) {
-    const hours = parseInt(parts[0]) || 0;
-    const minutes = parseInt(parts[1]) || 0;
-    const seconds = parseInt(parts[2]) || 0;
-    const result = hours * 60 + minutes + seconds / 60;
-    return isNaN(result) ? 0 : result;
-  }
-  return 0;
-}
-
 export const BackupCharts = memo(function BackupCharts({
   recentBackups,
   statusDistribution,
 }: BackupChartsProps) {
+  const toFiniteNumber = (value: unknown): number => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+  };
+
   // Memoize trend data calculation
   const trendData = useMemo(() => {
     if (!recentBackups || recentBackups.length === 0) return [];
@@ -76,10 +74,12 @@ export const BackupCharts = memo(function BackupCharts({
       .slice(0, 30)
       .reverse()
       .map((backup) => ({
-        date: format(new Date(backup.EndTime), "MM/dd"),
-        size: !isNaN(backup.SizeOfExaminedFilesMB) ? backup.SizeOfExaminedFilesMB : 0,
-        files: !isNaN(backup.ExaminedFiles) ? backup.ExaminedFiles : 0,
-        duration: parseDuration(backup.Duration),
+        date: isValid(new Date(backup.EndTime))
+          ? format(new Date(backup.EndTime), "MM/dd")
+          : "N/A",
+        size: Number.isFinite(backup.SizeOfExaminedFilesMB) ? backup.SizeOfExaminedFilesMB : 0,
+        files: Number.isFinite(backup.ExaminedFiles) ? backup.ExaminedFiles : 0,
+        duration: parseDurationToMinutes(backup.Duration),
       }));
   }, [recentBackups]);
 
@@ -95,14 +95,19 @@ export const BackupCharts = memo(function BackupCharts({
 
   const tooltipStyle = useMemo(
     () => ({
-      backgroundColor: "hsl(var(--card))",
-      border: "1px solid hsl(var(--border))",
+      backgroundColor: "var(--card)",
+      border: "1px solid var(--border)",
       borderRadius: "0.5rem",
+      color: "var(--card-foreground)",
     }),
     []
   );
 
-  const tickStyle = useMemo(() => ({ fill: "hsl(var(--muted-foreground))" }), []);
+  const tickStyle = useMemo(() => ({ fill: "var(--muted-foreground)" }), []);
+  const totalStatusCount = useMemo(
+    () => statusData.reduce((acc, item) => acc + item.value, 0),
+    [statusData]
+  );
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-4 mb-8">
@@ -131,16 +136,20 @@ export const BackupCharts = memo(function BackupCharts({
                   className="text-xs"
                   tick={tickStyle}
                   fontSize={10}
-                  width={40}
+                  width={58}
+                  tickFormatter={(value) => formatSizeFromMB(toFiniteNumber(value))}
                 />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(value) => formatSizeFromMB(toFiniteNumber(value))}
+                />
                 <Area
                   type="monotone"
                   dataKey="size"
-                  stroke="#3b82f6"
-                  fill="#3b82f6"
+                  stroke="var(--chart-1)"
+                  fill="var(--chart-1)"
                   fillOpacity={0.3}
-                  name="Tamaño (MB)"
+                  name="Tamaño"
                   animationDuration={800}
                 />
               </AreaChart>
@@ -161,26 +170,53 @@ export const BackupCharts = memo(function BackupCharts({
             <CardTitle className="text-sm">Distribución de Estados</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
-                  outerRadius={60}
-                  fill="#8884d8"
-                  dataKey="value"
-                  animationDuration={800}
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
+            {statusData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={150}>
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                      outerRadius={56}
+                      dataKey="value"
+                      animationDuration={800}
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      formatter={(value, name) => [
+                        formatCompactNumber(toFiniteNumber(value)),
+                        String(name),
+                      ]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  {statusData.map((item) => {
+                    const percent =
+                      totalStatusCount > 0
+                        ? ((item.value / totalStatusCount) * 100).toFixed(0)
+                        : "0";
+                    return (
+                      <div key={item.name} className="flex items-center justify-between gap-2">
+                        <span className="truncate">{item.name}</span>
+                        <span>{`${formatCompactNumber(item.value)} (${percent}%)`}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="flex h-45 items-center justify-center text-sm text-muted-foreground">
+                Sin datos recientes
+              </p>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -210,12 +246,16 @@ export const BackupCharts = memo(function BackupCharts({
                   className="text-xs"
                   tick={tickStyle}
                   fontSize={10}
-                  width={40}
+                  width={48}
+                  tickFormatter={(value) => formatCompactNumber(toFiniteNumber(value))}
                 />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(value) => formatCompactNumber(toFiniteNumber(value))}
+                />
                 <Bar
                   dataKey="files"
-                  fill="#10b981"
+                  fill="var(--chart-2)"
                   name="Archivos"
                   animationDuration={800}
                   radius={[4, 4, 0, 0]}
@@ -235,7 +275,7 @@ export const BackupCharts = memo(function BackupCharts({
       >
         <Card className="hover:shadow-lg transition-shadow duration-300">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Duración (min)</CardTitle>
+            <CardTitle className="text-sm">Duración</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={180}>
@@ -251,16 +291,20 @@ export const BackupCharts = memo(function BackupCharts({
                   className="text-xs"
                   tick={tickStyle}
                   fontSize={10}
-                  width={40}
+                  width={58}
+                  tickFormatter={(value) => formatDurationFromMinutes(toFiniteNumber(value))}
                 />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(value) => formatDurationFromMinutes(toFiniteNumber(value))}
+                />
                 <Line
                   type="monotone"
                   dataKey="duration"
-                  stroke="#f59e0b"
+                  stroke="var(--chart-4)"
                   strokeWidth={2}
-                  dot={{ fill: "#f59e0b", r: 3 }}
-                  name="Duración (min)"
+                  dot={{ fill: "var(--chart-4)", r: 3 }}
+                  name="Duración"
                   animationDuration={800}
                 />
               </LineChart>

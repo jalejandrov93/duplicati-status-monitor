@@ -1,9 +1,5 @@
-/**
- * Error Parser for Duplicati Backup Errors
- * 
- * Parses Duplicati exceptions and log lines to extract meaningful error types
- * and suggested actions for recovery.
- */
+import { getRecommendations } from "./recommendations";
+import type { CliCommand } from "./recommendations";
 
 export type DuplicatiErrorType =
   | "MISSING_FILES"           // Archivos faltantes en storage remoto
@@ -25,17 +21,16 @@ export interface ParsedError {
   isRepairable: boolean;
   missingFiles?: string[];
   warningCount?: number;
+  guiSteps: string[];
+  cliCommands: CliCommand[];
 }
 
-/**
- * Parsea una excepción de Duplicati y retorna información estructurada
- */
 export function parseDuplicatiError(exception: string, logLines?: string[]): ParsedError {
   const missingFiles = extractMissingFiles(logLines);
   const warningCount = countWarnings(logLines);
-  
-  // Detectar tipo de error basado en la excepción
+
   if (exception.includes("RemoteListVerificationException")) {
+    const rec = getRecommendations("MISSING_FILES");
     return {
       errorType: "MISSING_FILES",
       errorTitle: "Archivos Faltantes en Storage Remoto",
@@ -45,10 +40,12 @@ export function parseDuplicatiError(exception: string, logLines?: string[]): Par
       isRepairable: true,
       missingFiles,
       warningCount,
+      ...rec,
     };
   }
-  
+
   if (exception.includes("UnauthorizedAccessException") || exception.includes("AccessDenied")) {
+    const rec = getRecommendations("PERMISSION_DENIED");
     return {
       errorType: "PERMISSION_DENIED",
       errorTitle: "Error de Permisos",
@@ -58,10 +55,16 @@ export function parseDuplicatiError(exception: string, logLines?: string[]): Par
       isRepairable: false,
       missingFiles,
       warningCount,
+      ...rec,
     };
   }
-  
-  if (exception.includes("EncryptionException") || exception.includes("DecryptionException") || exception.includes("passphrase")) {
+
+  if (
+    exception.includes("EncryptionException") ||
+    exception.includes("DecryptionException") ||
+    exception.includes("passphrase")
+  ) {
+    const rec = getRecommendations("ENCRYPTION_ERROR");
     return {
       errorType: "ENCRYPTION_ERROR",
       errorTitle: "Error de Encriptación",
@@ -71,10 +74,16 @@ export function parseDuplicatiError(exception: string, logLines?: string[]): Par
       isRepairable: false,
       missingFiles,
       warningCount,
+      ...rec,
     };
   }
-  
-  if (exception.includes("TimeoutException") || exception.includes("timeout") || exception.includes("timed out")) {
+
+  if (
+    exception.includes("TimeoutException") ||
+    exception.includes("timeout") ||
+    exception.includes("timed out")
+  ) {
+    const rec = getRecommendations("TIMEOUT");
     return {
       errorType: "TIMEOUT",
       errorTitle: "Tiempo de Espera Agotado",
@@ -84,10 +93,16 @@ export function parseDuplicatiError(exception: string, logLines?: string[]): Par
       isRepairable: true,
       missingFiles,
       warningCount,
+      ...rec,
     };
   }
-  
-  if (exception.includes("WebException") || exception.includes("HttpException") || exception.includes("connection")) {
+
+  if (
+    exception.includes("WebException") ||
+    exception.includes("HttpException") ||
+    exception.includes("connection")
+  ) {
+    const rec = getRecommendations("CONNECTION_ERROR");
     return {
       errorType: "CONNECTION_ERROR",
       errorTitle: "Error de Conexión",
@@ -97,10 +112,12 @@ export function parseDuplicatiError(exception: string, logLines?: string[]): Par
       isRepairable: true,
       missingFiles,
       warningCount,
+      ...rec,
     };
   }
-  
+
   if (exception.includes("IOException") && (exception.includes("disk") || exception.includes("space"))) {
+    const rec = getRecommendations("DISK_FULL");
     return {
       errorType: "DISK_FULL",
       errorTitle: "Espacio en Disco Insuficiente",
@@ -110,10 +127,12 @@ export function parseDuplicatiError(exception: string, logLines?: string[]): Par
       isRepairable: false,
       missingFiles,
       warningCount,
+      ...rec,
     };
   }
-  
+
   if (exception.includes("DatabaseCorruptException") || exception.includes("SQLiteException")) {
+    const rec = getRecommendations("DATABASE_CORRUPT");
     return {
       errorType: "DATABASE_CORRUPT",
       errorTitle: "Base de Datos Corrupta",
@@ -123,10 +142,31 @@ export function parseDuplicatiError(exception: string, logLines?: string[]): Par
       isRepairable: true,
       missingFiles,
       warningCount,
+      ...rec,
     };
   }
-  
-  // Error desconocido
+
+  if (
+    exception.includes("CorruptedRemoteFile") ||
+    exception.includes("HashMismatch") ||
+    exception.includes("InvalidManifest") ||
+    exception.includes("InvalidSignature")
+  ) {
+    const rec = getRecommendations("CORRUPTED_FILES");
+    return {
+      errorType: "CORRUPTED_FILES",
+      errorTitle: "Archivos Corruptos en Storage Remoto",
+      errorDescription: "Se detectaron archivos de respaldo corruptos en el almacenamiento remoto. La integridad de los datos puede estar comprometida.",
+      suggestedCommand: "verify",
+      suggestedAction: "Verificar la integridad del backup remoto y reconstruir los bloques corruptos",
+      isRepairable: true,
+      missingFiles,
+      warningCount,
+      ...rec,
+    };
+  }
+
+  const rec = getRecommendations("UNKNOWN");
   return {
     errorType: "UNKNOWN",
     errorTitle: "Error Desconocido",
@@ -136,6 +176,7 @@ export function parseDuplicatiError(exception: string, logLines?: string[]): Par
     isRepairable: false,
     missingFiles,
     warningCount,
+    ...rec,
   };
 }
 

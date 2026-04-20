@@ -21,7 +21,11 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { EncryptedText } from "@/components/ui/encrypted-text";
-import { parseDuplicatiError, getErrorTypeConfig } from "@/lib/error-parser";
+import {
+  parseDuplicatiError,
+  getErrorTypeConfig,
+  type DuplicatiErrorType,
+} from "@/lib/error-parser";
 
 interface MachineCardProps {
   machine: MachineStatus;
@@ -77,6 +81,29 @@ const getHealthColor = (score: number) => {
   if (score >= 90) return "#10b981";
   if (score >= 70) return "#f59e0b";
   return "#ef4444";
+};
+
+const getErrorIcon = (errorType: DuplicatiErrorType) => {
+  switch (errorType) {
+    case "MISSING_FILES":
+      return Database;
+    case "PERMISSION_DENIED":
+      return Lock;
+    case "CONNECTION_ERROR":
+      return WifiOff;
+    case "ENCRYPTION_ERROR":
+      return Key;
+    default:
+      return XCircle;
+  }
+};
+
+const renderErrorIcon = (
+  errorType: DuplicatiErrorType,
+  className: string,
+) => {
+  const IconComponent = getErrorIcon(errorType);
+  return <IconComponent className={className} />;
 };
 
 export function MachineCard({ machine, index }: MachineCardProps) {
@@ -195,47 +222,57 @@ export function MachineCard({ machine, index }: MachineCardProps) {
                 </Badge>
               </div>
 
-              {/* Error Type Indicator - solo mostrar si hay errores */}
-              {hasErrors && errorConfig && parsedError && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  transition={{ duration: 0.3 }}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-xs",
-                    errorConfig.bgColor,
-                    "border",
-                    errorConfig.borderColor
-                  )}
-                >
-                  {parsedError.errorType === "MISSING_FILES" && (
-                    <Database className={cn("w-4 h-4", errorConfig.iconColor)} />
-                  )}
-                  {parsedError.errorType === "PERMISSION_DENIED" && (
-                    <Lock className={cn("w-4 h-4", errorConfig.iconColor)} />
-                  )}
-                  {parsedError.errorType === "CONNECTION_ERROR" && (
-                    <WifiOff className={cn("w-4 h-4", errorConfig.iconColor)} />
-                  )}
-                  {parsedError.errorType === "ENCRYPTION_ERROR" && (
-                    <Key className={cn("w-4 h-4", errorConfig.iconColor)} />
-                  )}
-                  {parsedError.errorType !== "MISSING_FILES" &&
-                    parsedError.errorType !== "PERMISSION_DENIED" &&
-                    parsedError.errorType !== "CONNECTION_ERROR" &&
-                    parsedError.errorType !== "ENCRYPTION_ERROR" && (
-                      <XCircle className={cn("w-4 h-4", errorConfig.iconColor)} />
-                    )}
-                  <span className={cn("font-medium", errorConfig.iconColor)}>
-                    {parsedError.errorTitle}
-                  </span>
-                  {parsedError.missingFiles && parsedError.missingFiles.length > 0 && (
-                    <span className="ml-auto text-muted-foreground">
-                      {parsedError.missingFiles.length} archivos
-                    </span>
-                  )}
-                </motion.div>
-              )}
+              {/* Error rail (fixed height) + hover details (desktop only) */}
+              <div className="relative h-8">
+                {hasErrors && errorConfig && parsedError ? (
+                  <>
+                    <div
+                      className={cn(
+                        "flex h-8 items-center gap-2 rounded-lg border px-3 text-xs transition-opacity duration-200 md:group-hover:opacity-0",
+                        errorConfig.bgColor,
+                        errorConfig.borderColor
+                      )}
+                    >
+                      {renderErrorIcon(parsedError.errorType, cn("h-4 w-4 shrink-0", errorConfig.iconColor))}
+                      <span className={cn("min-w-0 truncate font-medium", errorConfig.iconColor)}>
+                        {parsedError.errorTitle}
+                      </span>
+                      {parsedError.missingFiles && parsedError.missingFiles.length > 0 && (
+                        <span className="ml-auto shrink-0 text-muted-foreground">
+                          {parsedError.missingFiles.length} archivos
+                        </span>
+                      )}
+                    </div>
+
+                    <div
+                      className={cn(
+                        "pointer-events-none absolute inset-x-0 top-0 z-20 hidden rounded-lg border p-3 text-xs shadow-lg transition-all duration-200 md:block md:translate-y-1 md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:translate-y-0 md:group-hover:opacity-100",
+                        errorConfig.bgColor,
+                        errorConfig.borderColor
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        {renderErrorIcon(parsedError.errorType, cn("mt-0.5 h-4 w-4 shrink-0", errorConfig.iconColor))}
+                        <div className="min-w-0 flex-1">
+                          <p className={cn("font-medium leading-tight", errorConfig.iconColor)}>
+                            {parsedError.errorTitle}
+                          </p>
+                          <p className="mt-1 max-h-9 overflow-hidden text-muted-foreground">
+                            {parsedError.errorDescription}
+                          </p>
+                        </div>
+                        {parsedError.missingFiles && parsedError.missingFiles.length > 0 && (
+                          <span className="shrink-0 text-muted-foreground">
+                            {parsedError.missingFiles.length}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div aria-hidden className="h-8 rounded-lg border border-transparent" />
+                )}
+              </div>
 
               {/* Divider */}
               <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
@@ -344,7 +381,7 @@ export function MachineCard({ machine, index }: MachineCardProps) {
                   <HardDrive className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                   <span className="text-muted-foreground truncate">Tamaño:</span>
                   <span className="font-medium text-foreground ml-auto text-right truncate max-w-[50%]">
-                    {machine.latestBackup.SizeOfExaminedFilesMB &&
+                    {machine.latestBackup.SizeOfExaminedFilesMB != null &&
                       !isNaN(machine.latestBackup.SizeOfExaminedFilesMB)
                       ? formatBytes(machine.latestBackup.SizeOfExaminedFilesMB * 1024 * 1024)
                       : 'N/A'}
@@ -358,7 +395,7 @@ export function MachineCard({ machine, index }: MachineCardProps) {
                     Archivos:
                   </span>
                   <span className="font-medium text-foreground ml-auto text-right truncate max-w-[50%]">
-                    {machine.latestBackup.ExaminedFiles &&
+                    {machine.latestBackup.ExaminedFiles != null &&
                       !isNaN(machine.latestBackup.ExaminedFiles)
                       ? machine.latestBackup.ExaminedFiles.toLocaleString()
                       : 'N/A'}
@@ -366,9 +403,10 @@ export function MachineCard({ machine, index }: MachineCardProps) {
                 </div>
               </div>
 
-              {/* Quota Usage - Bottom section */}
-              {machine.currentQuotaUsage != null && (
-                <div className="space-y-1.5 pt-1.5 border-t border-border/50">
+              {/* Quota Usage - Bottom section (reserved height for consistent cards) */}
+              <div className="space-y-1.5 border-t border-border/50 pt-1.5">
+                {machine.currentQuotaUsage != null && (
+                  <>
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-medium text-muted-foreground">
                       Uso de Cuota
@@ -384,8 +422,9 @@ export function MachineCard({ machine, index }: MachineCardProps) {
                       className="h-2 bg-muted rounded-full overflow-hidden"
                     />
                   </div>
-                </div>
-              )}
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Shine effect on card surface */}

@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fira_Code } from "next/font/google";
+
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const firaCode = Fira_Code({
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Monitor de Respaldos Duplicati",
@@ -18,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={firaCode.className}>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -14,14 +14,13 @@ import {
     HardDrive,
     HelpCircle,
     Terminal,
-    ArrowRight,
     RefreshCw,
-    CheckCircle2,
     XCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeUpVariants } from "@/lib/animation-variants";
 import { parseDuplicatiError, getErrorTypeConfig, formatMissingFilesList } from "@/lib/error-parser";
+import { RecommendationsPanel } from "./recommendations-panel";
 import type { LatestBackup } from "@/types/machine";
 import { cn } from "@/lib/utils";
 
@@ -102,40 +101,14 @@ export const MachineErrorDetails = memo(function MachineErrorDetails({
                 </div>
 
                 <CardContent className="p-6 space-y-6">
-                    {/* Sección de acción sugerida */}
-                    {parsedError.isRepairable && (
-                        <div className={cn(
-                            "p-4 rounded-xl border-2 border-dashed",
-                            errorConfig.borderColor,
-                            errorConfig.bgColor
-                        )}>
-                            <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-lg bg-background shrink-0">
-                                    <Terminal className={cn("w-5 h-5", errorConfig.iconColor)} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-semibold text-foreground flex items-center gap-2">
-                                        <ArrowRight className="w-4 h-4" />
-                                        Acción Sugerida
-                                    </h4>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                        {parsedError.suggestedAction}
-                                    </p>
-                                    {/* Comando sugerido */}
-                                    <div className="mt-3 flex items-center gap-2">
-                                        <code className={cn(
-                                            "flex-1 px-3 py-2 rounded-lg text-sm font-mono",
-                                            "bg-background border",
-                                            errorConfig.borderColor,
-                                            "text-foreground"
-                                        )}>
-                                            duplicati-cli {parsedError.suggestedCommand} [storage-url]
-                                        </code>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    {/* Panel de recomendaciones con tabs GUI / CLI */}
+                    <div>
+                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
+                            <Terminal className={cn("w-4 h-4", errorConfig.iconColor)} />
+                            Cómo resolver este error
+                        </h4>
+                        <RecommendationsPanel parsedError={parsedError} />
+                    </div>
 
                     {/* Mostrar advertencia si hay archivos faltantes */}
                     {parsedError.warningCount && parsedError.warningCount > 0 && (
