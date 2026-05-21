@@ -45,6 +45,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copiar la base de datos de MaxMind para que esté disponible en producción
+COPY --from=builder --chown=nextjs:nodejs /app/GeoLite2-Country.mmdb ./
+
 USER nextjs
 
 EXPOSE 3000

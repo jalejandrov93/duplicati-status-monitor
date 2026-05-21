@@ -238,6 +238,9 @@
    MONGODB_URI=mongodb://localhost:27017/duplicati
    # O con MongoDB Atlas:
    # MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/duplicati?retryWrites=true&w=majority
+   # GeoIP (bloqueo por país)
+   GEOIP_DB_PATH=./GeoLite2-Country.mmdb
+   ALLOWED_COUNTRIES=CO
    ```
 
 4. **Inicia MongoDB** (si es local)
@@ -331,6 +334,15 @@ docker run -d \
 | `NODE_ENV` | Entorno de ejecución | ❌ | `development` |
 | `NEXT_TELEMETRY_DISABLED` | Deshabilitar telemetría de Next.js | ❌ | `1` |
 | `PORT` | Puerto de la aplicación | ❌ | `3000` |
+| `GEOIP_DB_PATH` | Ruta al archivo GeoLite2-Country.mmdb | ❌ | - |
+| `ALLOWED_COUNTRIES` | Lista CSV de países permitidos (ISO-3166-1 alpha-2) | ❌ | `CO` |
+
+### GeoIP / Bloqueo por país
+
+1. Descarga **GeoLite2 Country** desde MaxMind y guarda el `.mmdb` en el servidor.
+2. Define `GEOIP_DB_PATH` apuntando al archivo dentro del contenedor/host.
+3. Configura `ALLOWED_COUNTRIES` con los códigos ISO-3166-1 alpha-2 permitidos (ej. `CO,MX`).
+4. Asegura que el reverse proxy envíe `X-Forwarded-For` o `X-Real-IP` para identificar el IP real del cliente.
 
 ### Configuración de Duplicati
 
