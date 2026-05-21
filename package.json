@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "sharp": "^0.34.2",
     "@tanstack/react-query": "^5.90.20",
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
