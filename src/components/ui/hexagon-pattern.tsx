@@ -1,4 +1,5 @@
 import { useId } from "react"
+import { motion } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
@@ -43,6 +44,10 @@ interface HexagonPatternProps extends React.SVGProps<SVGSVGElement> {
    * GridPattern.
    */
   hexagons?: Array<[col: number, row: number]>
+  /**
+   * Class name applied to the active (highlighted) hexagons.
+   */
+  activeHexagonClassName?: string
   className?: string
   [key: string]: unknown
 }
@@ -229,6 +234,7 @@ export function HexagonPattern({
   strokeDasharray = "0",
   direction = "horizontal",
   hexagons,
+  activeHexagonClassName,
   className,
   ...props
 }: HexagonPatternProps) {
@@ -287,11 +293,28 @@ export function HexagonPattern({
         <svg aria-hidden="true" className="overflow-visible" x={x} y={y}>
           {hexagons.map(([col, row]) => {
             const [cx, cy] = hexCenter(col, row, radius, direction, gap)
+            
+            // Generar delays y duraciones pseudo-aleatorias basadas en la posición
+            const delay = (Math.abs(col * 13 + row * 7) % 10) * 0.4
+            const duration = 2 + (Math.abs(col * 5 + row * 11) % 4)
+
             return (
-              <polygon
+              <motion.polygon
                 key={`${col}-${row}`}
+                className={activeHexagonClassName}
                 points={hexPoints(cx, cy, radius - 1, direction)}
                 strokeWidth="0"
+                initial={{ opacity: 0.1, scale: 0.8 }}
+                animate={{ 
+                  opacity: [0.1, 1, 0.1],
+                  scale: [0.8, 1, 0.8]
+                }}
+                transition={{
+                  duration,
+                  delay,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
               />
             )
           })}

@@ -9,33 +9,36 @@ import { cn } from "@/lib/utils"
 
 export default function BlockedPage() {
   const [ip, setIp] = useState<string>("Desconocida");
+  const [hexagons, setHexagons] = useState<Array<[number, number]>>([]);
 
   useEffect(() => {
-    // Intentar recuperar el IP de los headers que el proxy haya podido inyectar o un API local si estuviera
-    // Como estamos en el cliente, el proxy debería enviar la IP en un header o podemos consumirla de ipify como debug visual
     fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
       .then((data) => setIp(data.ip))
       .catch(() => {});
+
+    // Generar hexágonos de fondo al azar para dar sensación dinámica
+    const generateHexagons = () => {
+      const hexes: Array<[number, number]> = [];
+      for (let i = 0; i < 30; i++) {
+        hexes.push([Math.floor(Math.random() * 25), Math.floor(Math.random() * 25)]);
+      }
+      setHexagons(hexes);
+    };
+
+    generateHexagons();
+    const interval = setInterval(generateHexagons, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 text-zinc-200 font-mono">
+    <div className="relative min-h-screen w-full overflow-hidden bg-zinc-950 flex items-center justify-center p-4 text-zinc-200 font-mono">
       <HexagonPattern
-        hexagons={[
-          [1, 1],
-          [4, 4],
-          [2, 2],
-          [3, 4],
-          [5, 4],
-          [8, 2],
-          [6, 3],
-          [8, 5],
-          [10, 10],
-        ]}
+        hexagons={hexagons}
+        activeHexagonClassName="fill-red-500/30"
         className={cn(
-          "mask-[radial-gradient(620px_circle_at_center,white,transparent)]",
-          "inset-0 skew-y-6"
+          "absolute inset-0 h-full w-full skew-y-6",
+          "mask-[radial-gradient(620px_circle_at_center,white,transparent)]"
         )}
       />
       <motion.div
