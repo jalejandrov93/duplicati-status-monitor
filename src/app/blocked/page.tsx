@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { ShieldAlert, Globe, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import DecryptedText from "@/components/ui/DecryptedText";
+import { HexagonPattern } from "@/components/ui/hexagon-pattern"
+import { cn } from "@/lib/utils"
 
 export default function BlockedPage() {
   const [ip, setIp] = useState<string>("Desconocida");
@@ -19,6 +21,23 @@ export default function BlockedPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 text-zinc-200 font-mono">
+      <HexagonPattern
+        hexagons={[
+          [1, 1],
+          [4, 4],
+          [2, 2],
+          [3, 4],
+          [5, 4],
+          [8, 2],
+          [6, 3],
+          [8, 5],
+          [10, 10],
+        ]}
+        className={cn(
+          "mask-[radial-gradient(620px_circle_at_center,white,transparent)]",
+          "inset-0 skew-y-6"
+        )}
+      />
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
