@@ -10,6 +10,10 @@ services:
       # Opcionales
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+      # Geobloqueo: ruta al archivo MaxMind dentro del contenedor
+      - GEOIP_DB_PATH=/app/GeoLite2-Country.mmdb
+      # Países permitidos (por defecto Colombia)
+      - ALLOWED_COUNTRIES=${ALLOWED_COUNTRIES:-CO}
     restart: unless-stopped
     networks:
       - duplicati-network
