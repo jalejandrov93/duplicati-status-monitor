@@ -1,9 +1,14 @@
 "use client";
 
 import { use, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { BackupHistoryTable } from "@/components/backup-history-table";
-import { BackupCharts } from "@/components/backup-charts";
+
+const BackupCharts = dynamic(
+  () => import("@/components/backup-charts").then((mod) => mod.BackupCharts),
+  { ssr: false, loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" /> }
+);
 import {
   MachineMetricCard,
   MachineQuotaCard,

@@ -23,18 +23,18 @@ export default async function connectDB() {
   }
 
   if (!cached.promise) {
+    mongoose.connection.on("error", (err) => {
+      console.error("Mongo error:", err);
+    });
+
+    mongoose.connection.once("open", () => {
+      console.log("✅ MongoDB connected");
+    });
+
     cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
     });
   }
-
-  mongoose.connection.on("error", (err) => {
-    console.error("Mongo error:", err);
-  });
-
-  mongoose.connection.once("open", () => {
-    console.log("✅ MongoDB connected");
-  });
 
   cached.conn = await cached.promise;
   return cached.conn;

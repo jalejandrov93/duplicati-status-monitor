@@ -2,6 +2,7 @@
 const nextConfig = {
   // Habilitar output standalone para Docker
   output: 'standalone',
+  serverExternalPackages: ['maxmind', 'mongoose', 'mongodb', 'sharp'],
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   }

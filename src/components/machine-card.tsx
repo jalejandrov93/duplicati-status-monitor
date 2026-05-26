@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { MachineStatus } from "@/types/backup";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -106,7 +107,7 @@ const renderErrorIcon = (
   return <IconComponent className={className} />;
 };
 
-export function MachineCard({ machine, index }: MachineCardProps) {
+export const MachineCard = memo(function MachineCard({ machine, index }: MachineCardProps) {
   const statusConfig = getStatusConfig(machine.latestBackup.Status);
   const StatusIcon = statusConfig.Icon;
   const healthColor = getHealthColor(machine.healthScore);
@@ -434,4 +435,4 @@ export function MachineCard({ machine, index }: MachineCardProps) {
       </Link>
     </motion.div>
   );
-}
+});

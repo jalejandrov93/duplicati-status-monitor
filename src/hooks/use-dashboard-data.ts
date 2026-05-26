@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { GlobalStats, MachineStatus } from "@/types/backup";
 
@@ -10,42 +10,57 @@ async function fetchMachines(): Promise<MachineStatus[]> {
   return response.json();
 }
 
-async function fetchStats(): Promise<GlobalStats> {
-  const response = await fetch("/api/stats", { cache: "no-store" });
-  if (!response.ok) throw new Error("Error al obtener estadísticas");
-  return response.json();
-}
-
-export function useDashboardData() {
+export function useDashboardData(initialMachines?: MachineStatus[]) {
   const machinesQuery = useQuery({
     queryKey: ["machines"],
     queryFn: fetchMachines,
     refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS,
+    initialData: initialMachines,
   });
 
-  const statsQuery = useQuery({
-    queryKey: ["stats"],
-    queryFn: fetchStats,
-    refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS,
-  });
+  const stats = useMemo<GlobalStats | undefined>(() => {
+    const machines = machinesQuery.data;
+    if (!machines || machines.length === 0) return undefined;
+
+    let successfulMachines = 0;
+    let warningMachines = 0;
+    let errorMachines = 0;
+    let totalBackups = 0;
+
+    machines.forEach((machine) => {
+      const status = machine.latestBackup?.Status;
+      if (status === "SUCCESS") {
+        successfulMachines++;
+      } else if (status === "WARNING" || status === "PARTIAL") {
+        warningMachines++;
+      } else if (status === "ERROR") {
+        errorMachines++;
+      }
+      totalBackups += machine.totalBackups || 0;
+    });
+
+    return {
+      totalMachines: machines.length,
+      successfulMachines,
+      warningMachines,
+      errorMachines,
+      totalBackups,
+      lastUpdated: new Date(),
+    };
+  }, [machinesQuery.data]);
 
   const refresh = useCallback(async () => {
-    const [machinesResult, statsResult] = await Promise.all([
-      machinesQuery.refetch(),
-      statsQuery.refetch(),
-    ]);
-
+    const machinesResult = await machinesQuery.refetch();
     if (machinesResult.error) throw machinesResult.error;
-    if (statsResult.error) throw statsResult.error;
-  }, [machinesQuery, statsQuery]);
+  }, [machinesQuery]);
 
   return {
     machines: machinesQuery.data ?? [],
-    stats: statsQuery.data,
+    stats,
     machinesError: machinesQuery.error,
-    statsError: statsQuery.error,
+    statsError: machinesQuery.error,
     isInitialLoading: machinesQuery.isLoading,
-    isRefreshing: machinesQuery.isFetching || statsQuery.isFetching,
+    isRefreshing: machinesQuery.isFetching,
     refresh,
   };
 }
