@@ -3,7 +3,8 @@
 import { EmailAccountQuota } from "@/types/email";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { formatBytes, cn } from "@/lib/utils";
+import { formatBytes } from "@/lib/format-utils";
+import { cn } from "@/lib/utils";
 import { Mail, HardDrive, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import {

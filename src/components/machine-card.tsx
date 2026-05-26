@@ -4,19 +4,14 @@ import { memo } from "react";
 import { MachineStatus } from "@/types/backup";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { formatBytes } from "@/lib/utils";
+import { formatBytes } from "@/lib/format-utils";
+import { getStatusConfig, getErrorIcon } from "@/lib/status-utils";
+import { getHealthScoreColor } from "@/lib/health-score";
 import {
   Activity,
   HardDrive,
   FileText,
   Clock,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Database,
-  Lock,
-  WifiOff,
-  Key,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -33,72 +28,6 @@ interface MachineCardProps {
   index: number;
 }
 
-const getStatusConfig = (status: string) => {
-  switch (status) {
-    case "SUCCESS":
-      return {
-        borderColor: "border-green-500",
-        glowColor: "#10b981",
-        iconColor: "text-green-500",
-        bgColor: "bg-green-500/5",
-        Icon: CheckCircle2,
-        label: "Operacional",
-        shadowColor: "shadow-green-500", // glowColor matches green-500 more naturally for shadow class
-      };
-    case "WARNING":
-      return {
-        borderColor: "border-yellow-500",
-        glowColor: "#f59e0b",
-        iconColor: "text-yellow-500",
-        bgColor: "bg-yellow-500/5",
-        Icon: AlertTriangle,
-        label: "Advertencia",
-        shadowColor: "shadow-yellow-500",
-      };
-    case "ERROR":
-      return {
-        borderColor: "border-red-500",
-        glowColor: "#ef4444",
-        iconColor: "text-red-500",
-        bgColor: "bg-red-500/5",
-        Icon: XCircle,
-        label: "Crítico",
-        shadowColor: "shadow-red-500",
-      };
-    default:
-      return {
-        borderColor: "border-gray-500",
-        glowColor: "#6b7280",
-        iconColor: "text-gray-500",
-        bgColor: "bg-gray-500/5",
-        Icon: Activity,
-        label: "Desconocido",
-        shadowColor: "shadow-gray-500",
-      };
-  }
-};
-
-const getHealthColor = (score: number) => {
-  if (score >= 90) return "#10b981";
-  if (score >= 70) return "#f59e0b";
-  return "#ef4444";
-};
-
-const getErrorIcon = (errorType: DuplicatiErrorType) => {
-  switch (errorType) {
-    case "MISSING_FILES":
-      return Database;
-    case "PERMISSION_DENIED":
-      return Lock;
-    case "CONNECTION_ERROR":
-      return WifiOff;
-    case "ENCRYPTION_ERROR":
-      return Key;
-    default:
-      return XCircle;
-  }
-};
-
 const renderErrorIcon = (
   errorType: DuplicatiErrorType,
   className: string,
@@ -110,7 +39,7 @@ const renderErrorIcon = (
 export const MachineCard = memo(function MachineCard({ machine, index }: MachineCardProps) {
   const statusConfig = getStatusConfig(machine.latestBackup.Status);
   const StatusIcon = statusConfig.Icon;
-  const healthColor = getHealthColor(machine.healthScore);
+  const healthColor = getHealthScoreColor(machine.healthScore).color;
 
   // Parsear error si hay errores
   const hasErrors = machine.latestBackup.HasErrors && machine.latestBackup.Exception;

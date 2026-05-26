@@ -1,20 +1,30 @@
 export type BackupStatus = "SUCCESS" | "WARNING" | "PARTIAL" | "ERROR";
 
-export interface BackupDocument {
+export interface BackupIdentity {
   _id?: string;
   MachineName: string;
   BackupName: string;
   BackupId: string;
-  Status: BackupStatus;
-  ParsedResult: string;
-  PartialBackup: boolean;
-  Interrupted: boolean;
+  Version: string;
+  ExecutionMode: string;
+  MainOperation: string;
+  WebhookUrl?: string;
+}
+
+export interface BackupTiming {
   BeginTime: Date;
   EndTime: Date;
   RelativeEndTime: string;
   Duration: string;
-  MainOperation: string;
-  Version: string;
+  LastBackupDate: Date;
+  ReceivedAt: Date;
+}
+
+export interface BackupMetrics {
+  Status: BackupStatus;
+  ParsedResult: string;
+  PartialBackup: boolean;
+  Interrupted: boolean;
   ExaminedFiles: number;
   OpenedFiles: number;
   AddedFiles: number;
@@ -26,7 +36,6 @@ export interface BackupDocument {
   NotProcessedFiles: number;
   SizeOfExaminedFilesMB: number;
   SizeOfAddedFilesMB: number;
-  LastBackupDate: Date;
   BackupListCount: number;
   BytesDownloadedMB: number;
   BytesUploadedMB: number;
@@ -35,10 +44,6 @@ export interface BackupDocument {
   FilesDeleted: number;
   RemoteCalls: number;
   RetryAttempts: number;
-  FreeQuotaSpaceMB: number;
-  TotalQuotaSpaceMB: number;
-  UsedQuotaSpaceMB: number;
-  QuotaUsagePercent: number;
   WarningsCount: number;
   ErrorsCount: number;
   MessagesCount: number;
@@ -50,10 +55,16 @@ export interface BackupDocument {
     result: string;
     details?: any;
   }[];
-  ReceivedAt: Date;
-  WebhookUrl?: string;
-  ExecutionMode: string;
 }
+
+export interface BackupQuota {
+  FreeQuotaSpaceMB: number;
+  TotalQuotaSpaceMB: number;
+  UsedQuotaSpaceMB: number;
+  QuotaUsagePercent: number;
+}
+
+export interface BackupDocument extends BackupIdentity, BackupTiming, BackupMetrics, BackupQuota {}
 
 export interface MachineStatus {
   machineName: string;

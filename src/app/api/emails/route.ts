@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { isCpanelConfigured } from "@/lib/email/cpanel-client";
 import { getEmailDashboardData } from "@/lib/email/email-quota";
 import { getClientIp, isEmailMonitorIpAllowed } from "@/lib/ip-access";
+import { apiHandler } from "@/lib/api-handler";
 
-export async function GET(request: NextRequest) {
+export const GET = apiHandler(async (request: NextRequest) => {
   const clientIp = getClientIp(request);
 
   if (!isEmailMonitorIpAllowed(clientIp)) {
@@ -17,14 +18,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  try {
-    const data = await getEmailDashboardData();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error obteniendo cuotas de correo:", error);
-    return NextResponse.json(
-      { error: "No se pudieron obtener las cuotas de correo" },
-      { status: 502 },
-    );
-  }
-}
+  const data = await getEmailDashboardData();
+  return NextResponse.json(data);
+});

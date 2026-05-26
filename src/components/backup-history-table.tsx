@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BackupHistoryResponse, BackupDocument } from "@/types/backup";
-import { formatBytes } from "@/lib/utils";
+import { formatBytes } from "@/lib/format-utils";
 import { format } from "date-fns";
 import { ChevronDown, ChevronRight, ChevronLeft, Download, ArrowUpDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";

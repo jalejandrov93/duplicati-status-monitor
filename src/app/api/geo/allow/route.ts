@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import maxmind, { type Reader, type Response } from "maxmind";
 import { promises as fs } from "fs";
+import { apiHandler } from "@/lib/api-handler";
 
 type GeoLiteCountry = Response & {
   country?: { iso_code?: string | null } | null;
@@ -9,7 +10,7 @@ type GeoLiteCountry = Response & {
 // Este endpoint está excluido del middleware (shouldBypass lo permite).
 // Usalo para diagnosticar qué IP y país detecta el servidor en producción.
 // IMPORTANTE: removelo o protegelo con un secret antes de hacer la app pública.
-export async function GET(request: NextRequest) {
+export const GET = apiHandler(async (request: NextRequest) => {
   const dbPath = process.env.GEOIP_DB_PATH;
   const allowedCountries = (process.env.ALLOWED_COUNTRIES ?? "CO")
     .split(",")
@@ -68,4 +69,5 @@ export async function GET(request: NextRequest) {
     allowed,
     verdict: allowed ? "✅ PERMITIDO" : "🚫 BLOQUEADO",
   });
-}
+});
+

@@ -1,14 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import type { MachineDetailData } from "@/types/machine";
+import { fetchApi } from "@/lib/fetch-api";
 
-async function fetchMachineDetails(
+function fetchMachineDetails(
     machineName: string
 ): Promise<MachineDetailData> {
-    const res = await fetch(`/api/machines/${encodeURIComponent(machineName)}`, {
-        cache: "no-store",
-    });
-    if (!res.ok) throw new Error("Error al obtener detalles de la máquina");
-    return res.json();
+    return fetchApi<MachineDetailData>(`/api/machines/${encodeURIComponent(machineName)}`);
 }
 
 export function useMachineDetails(machineName: string) {

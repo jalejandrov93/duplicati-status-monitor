@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Backup from "@/models/Backup";
 import { MachineStatus } from "@/types/backup";
-import { calculateHealthScore } from "@/lib/utils";
+import { calculateHealthScore } from "@/lib/health-score";
+import { apiHandler } from "@/lib/api-handler";
 
 export const dynamic = "force-dynamic";
 
@@ -93,15 +94,7 @@ export async function getMachinesData(): Promise<MachineStatus[]> {
   return cachedData;
 }
 
-export async function GET() {
-  try {
-    const data = await getMachinesData();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error al obtener máquinas:", error);
-    return NextResponse.json(
-      { error: "Error al obtener máquinas" },
-      { status: 500 }
-    );
-  }
-}
+export const GET = apiHandler(async () => {
+  const data = await getMachinesData();
+  return NextResponse.json(data);
+});

@@ -1,13 +1,12 @@
 import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { GlobalStats, MachineStatus } from "@/types/backup";
+import { fetchApi } from "@/lib/fetch-api";
 
 export const DASHBOARD_REFRESH_INTERVAL_MS = 60000;
 
-async function fetchMachines(): Promise<MachineStatus[]> {
-  const response = await fetch("/api/machines", { cache: "no-store" });
-  if (!response.ok) throw new Error("Error al obtener máquinas");
-  return response.json();
+function fetchMachines(): Promise<MachineStatus[]> {
+  return fetchApi<MachineStatus[]>("/api/machines");
 }
 
 export function useDashboardData(initialMachines?: MachineStatus[]) {

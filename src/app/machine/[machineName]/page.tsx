@@ -16,7 +16,8 @@ import {
   MachineDetailHeader,
 } from "@/components/machine-detail";
 import { HardDrive, CheckCircle2, Activity, AlertCircle } from "lucide-react";
-import { formatCompactNumber, formatSizeFromMB, getHealthScoreColor } from "@/lib/utils";
+import { formatCompactNumber, formatSizeFromMB } from "@/lib/format-utils";
+import { getHealthScoreColor } from "@/lib/health-score";
 import { useMachineDetails } from "@/hooks/use-machine-details";
 import MachineLoader from "@/components/machine-loader";
 import type { StatusBadgeVariant } from "@/types/machine";

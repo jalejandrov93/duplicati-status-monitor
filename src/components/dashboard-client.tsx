@@ -16,9 +16,10 @@ import { MachineStatus } from "@/types/backup";
 
 interface DashboardClientProps {
   initialMachines: MachineStatus[];
+  dbError?: string | null;
 }
 
-export default function DashboardClient({ initialMachines }: DashboardClientProps) {
+export default function DashboardClient({ initialMachines, dbError }: DashboardClientProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] =
     useState<DashboardStatusFilter>("all");
@@ -61,6 +62,11 @@ export default function DashboardClient({ initialMachines }: DashboardClientProp
     meta,
   });
 
+  const errorToShow = useMemo(() => {
+    if (dbError) return new Error(dbError);
+    return machinesError instanceof Error ? machinesError : null;
+  }, [dbError, machinesError]);
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <BackgroundRippleEffect cols={30} rows={15} />
@@ -69,7 +75,7 @@ export default function DashboardClient({ initialMachines }: DashboardClientProp
           machines={filteredMachines}
           stats={stats}
           isLoading={isInitialLoading}
-          machinesError={machinesError instanceof Error ? machinesError : null}
+          machinesError={errorToShow}
           statsError={statsError instanceof Error ? statsError : null}
           searchTerm={searchTerm}
           statusFilter={statusFilter}

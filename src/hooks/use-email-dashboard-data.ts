@@ -1,21 +1,12 @@
 import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EmailDashboardResponse } from "@/types/email";
+import { fetchApi } from "@/lib/fetch-api";
 
 export const EMAIL_DASHBOARD_REFRESH_INTERVAL_MS = 60000;
 
-async function fetchEmailDashboard(): Promise<EmailDashboardResponse> {
-  const response = await fetch("/api/emails", { cache: "no-store" });
-  if (response.status === 403) {
-    throw new Error("No autorizado para acceder al módulo de correos");
-  }
-  if (response.status === 503) {
-    throw new Error("El servicio de correos no está configurado");
-  }
-  if (!response.ok) {
-    throw new Error("Error al obtener cuotas de correo");
-  }
-  return response.json();
+function fetchEmailDashboard(): Promise<EmailDashboardResponse> {
+  return fetchApi<EmailDashboardResponse>("/api/emails");
 }
 
 export function useEmailDashboardData() {

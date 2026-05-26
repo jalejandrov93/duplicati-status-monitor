@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
 import { cardVariants } from "@/lib/animation-variants";
-import { formatBytes } from "@/lib/utils";
+import { formatBytes } from "@/lib/format-utils";
 
 export interface QuotaCardProps {
     currentQuotaUsage: number;

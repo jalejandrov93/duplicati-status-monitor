@@ -25,7 +25,7 @@ import {
   formatDurationFromMinutes,
   formatSizeFromMB,
   parseDurationToMinutes,
-} from "@/lib/utils";
+} from "@/lib/format-utils";
 import type { BackupRecord, StatusDistribution } from "@/types/machine";
 
 interface BackupChartsProps {

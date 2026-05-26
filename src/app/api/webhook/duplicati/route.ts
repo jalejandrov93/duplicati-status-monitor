@@ -1,82 +1,75 @@
+import { apiHandler } from "@/lib/api-handler";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Backup from "@/models/Backup";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
-  try {
-    const data = await request.json();
+export const POST = apiHandler(async (request: NextRequest) => {
+  const data = await request.json();
 
-    await connectDB();
+  await connectDB();
 
-    // Transform Duplicati webhook data to our schema
-    const backupDocument = {
-      MachineName: data.MachineName || data.MACHINE_NAME || "Unknown",
-      BackupName: data.BackupName || data.backup_name || "Unknown",
-      BackupId: data.BackupID || data.backup_id || generateId(),
-      Status: mapStatus(data.ParsedResult || data.Result),
-      ParsedResult: data.ParsedResult || data.Result || "Unknown",
-      PartialBackup: data.PartialBackup === "true" || data.PartialBackup === true,
-      Interrupted: data.Interrupted === "true" || data.Interrupted === true,
-      BeginTime: new Date(data.BeginTime || Date.now()),
-      EndTime: new Date(data.EndTime || Date.now()),
-      RelativeEndTime: getRelativeTime(data.EndTime),
-      Duration: data.Duration || "00:00:00",
-      MainOperation: data.MainOperation || "Backup",
-      Version: data.Version || "Unknown",
-      ExaminedFiles: parseInt(data.ExaminedFiles || "0"),
-      OpenedFiles: parseInt(data.OpenedFiles || "0"),
-      AddedFiles: parseInt(data.AddedFiles || "0"),
-      ModifiedFiles: parseInt(data.ModifiedFiles || "0"),
-      DeletedFiles: parseInt(data.DeletedFiles || "0"),
-      DeletedFolders: parseInt(data.DeletedFolders || "0"),
-      AddedFolders: parseInt(data.AddedFolders || "0"),
-      FilesWithError: parseInt(data.FilesWithError || "0"),
-      NotProcessedFiles: parseInt(data.NotProcessedFiles || "0"),
-      SizeOfExaminedFilesMB: parseFloat(data.SizeOfExaminedFiles || "0") / (1024 * 1024),
-      SizeOfAddedFilesMB: parseFloat(data.SizeOfAddedFiles || "0") / (1024 * 1024),
-      LastBackupDate: data.LastBackupDate ? new Date(data.LastBackupDate) : new Date(),
-      BackupListCount: parseInt(data.BackupListCount || "0"),
-      BytesDownloadedMB: parseFloat(data.BytesDownloaded || "0") / (1024 * 1024),
-      BytesUploadedMB: parseFloat(data.BytesUploaded || "0") / (1024 * 1024),
-      FilesUploaded: parseInt(data.FilesUploaded || "0"),
-      FilesDownloaded: parseInt(data.FilesDownloaded || "0"),
-      FilesDeleted: parseInt(data.FilesDeleted || "0"),
-      RemoteCalls: parseInt(data.RemoteCalls || "0"),
-      RetryAttempts: parseInt(data.RetryAttempts || "0"),
-      FreeQuotaSpaceMB: parseFloat(data.FreeQuotaSpace || "0") / (1024 * 1024),
-      TotalQuotaSpaceMB: parseFloat(data.TotalQuotaSpace || "0") / (1024 * 1024),
-      UsedQuotaSpaceMB: parseFloat(data.UsedQuotaSpace || "0") / (1024 * 1024),
-      QuotaUsagePercent: calculateQuotaPercent(data.UsedQuotaSpace, data.TotalQuotaSpace),
-      WarningsCount: parseInt(data.Warnings || "0"),
-      ErrorsCount: parseInt(data.Errors || "0"),
-      MessagesCount: parseInt(data.Messages || "0"),
-      LogLines: parseLogLines(data.LogLines),
-      Exception: data.Exception,
-      HasErrors: (parseInt(data.Errors || "0") > 0) || data.Failed === "true",
-      AdditionalOperations: parseAdditionalOperations(data),
-      ReceivedAt: new Date(),
-      WebhookUrl: request.url,
-      ExecutionMode: data.ExecutionMode || "Unknown",
-    };
+  // Transform Duplicati webhook data to our schema
+  const backupDocument = {
+    MachineName: data.MachineName || data.MACHINE_NAME || "Unknown",
+    BackupName: data.BackupName || data.backup_name || "Unknown",
+    BackupId: data.BackupID || data.backup_id || generateId(),
+    Status: mapStatus(data.ParsedResult || data.Result),
+    ParsedResult: data.ParsedResult || data.Result || "Unknown",
+    PartialBackup: data.PartialBackup === "true" || data.PartialBackup === true,
+    Interrupted: data.Interrupted === "true" || data.Interrupted === true,
+    BeginTime: new Date(data.BeginTime || Date.now()),
+    EndTime: new Date(data.EndTime || Date.now()),
+    RelativeEndTime: getRelativeTime(data.EndTime),
+    Duration: data.Duration || "00:00:00",
+    MainOperation: data.MainOperation || "Backup",
+    Version: data.Version || "Unknown",
+    ExaminedFiles: parseInt(data.ExaminedFiles || "0"),
+    OpenedFiles: parseInt(data.OpenedFiles || "0"),
+    AddedFiles: parseInt(data.AddedFiles || "0"),
+    ModifiedFiles: parseInt(data.ModifiedFiles || "0"),
+    DeletedFiles: parseInt(data.DeletedFiles || "0"),
+    DeletedFolders: parseInt(data.DeletedFolders || "0"),
+    AddedFolders: parseInt(data.AddedFolders || "0"),
+    FilesWithError: parseInt(data.FilesWithError || "0"),
+    NotProcessedFiles: parseInt(data.NotProcessedFiles || "0"),
+    SizeOfExaminedFilesMB: parseFloat(data.SizeOfExaminedFiles || "0") / (1024 * 1024),
+    SizeOfAddedFilesMB: parseFloat(data.SizeOfAddedFiles || "0") / (1024 * 1024),
+    LastBackupDate: data.LastBackupDate ? new Date(data.LastBackupDate) : new Date(),
+    BackupListCount: parseInt(data.BackupListCount || "0"),
+    BytesDownloadedMB: parseFloat(data.BytesDownloaded || "0") / (1024 * 1024),
+    BytesUploadedMB: parseFloat(data.BytesUploaded || "0") / (1024 * 1024),
+    FilesUploaded: parseInt(data.FilesUploaded || "0"),
+    FilesDownloaded: parseInt(data.FilesDownloaded || "0"),
+    FilesDeleted: parseInt(data.FilesDeleted || "0"),
+    RemoteCalls: parseInt(data.RemoteCalls || "0"),
+    RetryAttempts: parseInt(data.RetryAttempts || "0"),
+    FreeQuotaSpaceMB: parseFloat(data.FreeQuotaSpace || "0") / (1024 * 1024),
+    TotalQuotaSpaceMB: parseFloat(data.TotalQuotaSpace || "0") / (1024 * 1024),
+    UsedQuotaSpaceMB: parseFloat(data.UsedQuotaSpace || "0") / (1024 * 1024),
+    QuotaUsagePercent: calculateQuotaPercent(data.UsedQuotaSpace, data.TotalQuotaSpace),
+    WarningsCount: parseInt(data.Warnings || "0"),
+    ErrorsCount: parseInt(data.Errors || "0"),
+    MessagesCount: parseInt(data.Messages || "0"),
+    LogLines: parseLogLines(data.LogLines),
+    Exception: data.Exception,
+    HasErrors: (parseInt(data.Errors || "0") > 0) || data.Failed === "true",
+    AdditionalOperations: parseAdditionalOperations(data),
+    ReceivedAt: new Date(),
+    WebhookUrl: request.url,
+    ExecutionMode: data.ExecutionMode || "Unknown",
+  };
 
-    await Backup.create(backupDocument);
+  await Backup.create(backupDocument);
 
-    console.log(`Backup report received for ${backupDocument.MachineName} - Status: ${backupDocument.Status}`);
+  console.log(`Backup report received for ${backupDocument.MachineName} - Status: ${backupDocument.Status}`);
 
-    return NextResponse.json(
-      { success: true, message: "Backup report received", machineName: backupDocument.MachineName },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Webhook processing error:", error);
-    return NextResponse.json(
-      { error: "Failed to process webhook", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json(
+    { success: true, message: "Backup report received", machineName: backupDocument.MachineName },
+    { status: 200 }
+  );
+});
 
 function mapStatus(parsedResult: string): "SUCCESS" | "WARNING" | "PARTIAL" | "ERROR" {
   const result = (parsedResult || "").toLowerCase();
