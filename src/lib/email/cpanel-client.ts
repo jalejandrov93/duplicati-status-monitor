@@ -1,4 +1,4 @@
-interface CpanelConfig {
+export interface CpanelConfig {
   host: string;
   port: number;
   username: string;
@@ -6,7 +6,7 @@ interface CpanelConfig {
   domain?: string;
 }
 
-interface CpanelEmailRaw {
+export interface CpanelEmailRaw {
   email?: string;
   login?: string;
   diskused?: number | string;
@@ -14,6 +14,9 @@ interface CpanelEmailRaw {
   diskusedpercent?: number | string;
   humandiskused?: string;
   humandiskquota?: string;
+  suspended_login?: number | string | boolean;
+  suspended_incoming?: number | string | boolean;
+  suspended_outgoing?: number | string | boolean;
 }
 
 interface CpanelUapiResponse {
@@ -44,7 +47,7 @@ export function isCpanelConfigured(): boolean {
   );
 }
 
-function getCpanelConfig(): CpanelConfig {
+export function getCpanelConfig(): CpanelConfig {
   const host = process.env.CPANEL_HOST?.trim();
   const username = process.env.CPANEL_USERNAME?.trim();
   const apiToken = process.env.CPANEL_API_TOKEN?.trim();
@@ -87,6 +90,16 @@ function isUnlimitedQuota(value: number | string | undefined): boolean {
   return false;
 }
 
+function parseBooleanValue(value: number | string | boolean | undefined): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const norm = value.trim().toLowerCase();
+    return norm === "1" || norm === "true" || norm === "yes";
+  }
+  return false;
+}
+
 function normalizeEmailAccount(raw: CpanelEmailRaw): CpanelEmailRaw {
   const email = raw.email || raw.login || "";
   const unlimited = isUnlimitedQuota(raw.diskquota ?? raw.humandiskquota);
@@ -104,6 +117,9 @@ function normalizeEmailAccount(raw: CpanelEmailRaw): CpanelEmailRaw {
     diskusedpercent,
     humandiskused: raw.humandiskused,
     humandiskquota: raw.humandiskquota,
+    suspended_login: parseBooleanValue(raw.suspended_login),
+    suspended_incoming: parseBooleanValue(raw.suspended_incoming),
+    suspended_outgoing: parseBooleanValue(raw.suspended_outgoing),
   };
 }
 
@@ -121,6 +137,7 @@ export async function fetchCpanelEmailAccounts(): Promise<CpanelEmailRaw[]> {
   if (config.domain) {
     url.searchParams.set("domain", config.domain);
   }
+  url.searchParams.set("get_restrictions", "1");
 
   const response = await fetch(url.toString(), {
     method: "GET",

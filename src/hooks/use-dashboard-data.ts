@@ -14,7 +14,7 @@ export function useDashboardData(initialMachines?: MachineStatus[]) {
     queryKey: ["machines"],
     queryFn: fetchMachines,
     refetchInterval: DASHBOARD_REFRESH_INTERVAL_MS,
-    initialData: initialMachines,
+    initialData: initialMachines && initialMachines.length > 0 ? initialMachines : undefined,
   });
 
   const stats = useMemo<GlobalStats | undefined>(() => {

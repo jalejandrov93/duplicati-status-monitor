@@ -25,6 +25,7 @@ export function useEmailDashboardData() {
     accounts: query.data?.accounts ?? [],
     stats: query.data?.stats,
     lastUpdated: query.data?.lastUpdated,
+    domainDnsHealth: query.data?.domainDnsHealth,
     error: query.error,
     isInitialLoading: query.isLoading,
     isRefreshing: query.isFetching,

@@ -10,6 +10,8 @@ import { EmailCard } from "@/components/email/email-card";
 import { EmailListView } from "@/components/email/email-list-view";
 import { EmailDashboardStats } from "@/components/email/email-dashboard-stats";
 import { EmailHiddenPanel } from "@/components/email/email-hidden-panel";
+import { DomainHealthWidget } from "@/components/email/domain-health-widget";
+import { DnsHealthResult } from "@/lib/email/dns-health";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmailViewMode } from "@/hooks/use-email-monitor-settings";
@@ -29,6 +31,7 @@ interface EmailDashboardContentProps {
   onRestoreAccount: (email: string) => void;
   onClearHiddenAccounts: () => void;
   onRetry: () => void | Promise<void>;
+  domainDnsHealth?: DnsHealthResult;
 }
 
 function EmailLoadingState() {
@@ -106,6 +109,7 @@ export function EmailDashboardContent({
   onRestoreAccount,
   onClearHiddenAccounts,
   onRetry,
+  domainDnsHealth,
 }: EmailDashboardContentProps) {
   const hasAccounts = accounts.length > 0;
 
@@ -122,11 +126,16 @@ export function EmailDashboardContent({
           <span>Actualizando cada {Math.floor(refreshIntervalMs / 1000)}s</span>
         </div>
 
-        <EmailDashboardStats
-          stats={stats}
-          onFilterClick={onStatusFilterChange}
-          activeFilter={statusFilter}
-        />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
+          <div className="lg:col-span-3">
+            <EmailDashboardStats
+              stats={stats}
+              onFilterClick={onStatusFilterChange}
+              activeFilter={statusFilter}
+            />
+          </div>
+          
+        </div>
 
         {!hasAccounts ? (
           <EmailEmptyState
@@ -155,6 +164,9 @@ export function EmailDashboardContent({
           onRestoreAccount={onRestoreAccount}
           onClearAll={onClearHiddenAccounts}
         />
+        <div className="mt-2">
+            <DomainHealthWidget dnsHealth={domainDnsHealth} />
+          </div>
       </>
     );
   })();

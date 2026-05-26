@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { EmailAccountQuota } from "@/types/email";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { formatBytes } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
-import { Mail, HardDrive, EyeOff } from "lucide-react";
+import { Mail, HardDrive, EyeOff, Activity, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
+import { OutlookConfigModal } from "@/components/email/outlook-config-modal";
 import {
   EmailStatusBadge,
   getEmailStatusConfig,
@@ -19,6 +21,7 @@ interface EmailCardProps {
 }
 
 export function EmailCard({ account, index, onHideAccount }: EmailCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const statusConfig = getEmailStatusConfig(account.status);
   const quotaValue = account.usagePercent ?? 0;
 
@@ -118,9 +121,72 @@ export function EmailCard({ account, index, onHideAccount }: EmailCardProps) {
                   : " · Cuota ilimitada"}
               </p>
             </div>
+
+            {/* Health and Restrictions */}
+            <div className="space-y-2 px-5 pb-3">
+              {account.healthScore !== undefined && (
+                <div className="hidden items-center justify-between text-xs">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Activity className="h-3.5 w-3.5" />
+                    Salud
+                  </span>
+                  <span
+                    className={cn(
+                      "font-bold",
+                      account.healthStatus === "excellent" && "text-green-500",
+                      account.healthStatus === "good" && "text-green-400",
+                      account.healthStatus === "warning" && "text-yellow-500",
+                      account.healthStatus === "critical" && "text-red-500 animate-pulse",
+                    )}
+                  >
+                    {account.healthScore}/100
+                  </span>
+                </div>
+              )}
+
+              {(account.suspendedOutgoing ||
+                account.suspendedIncoming ||
+                account.suspendedLogin) && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {account.suspendedOutgoing && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-500 border border-red-500/25">
+                      <ShieldAlert className="h-3 w-3" /> Envío bloqueado
+                    </span>
+                  )}
+                  {account.suspendedIncoming && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-500 border border-red-500/25">
+                      <ShieldAlert className="h-3 w-3" /> Recepción bloqueada
+                    </span>
+                  )}
+                  {account.suspendedLogin && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-500 border border-red-500/25">
+                      <ShieldAlert className="h-3 w-3" /> Login bloqueado
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Actions Footer */}
+            <div className="p-5 pt-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs font-semibold rounded-2xl border bg-muted/20 hover:bg-muted/40"
+                onClick={() => setIsModalOpen(true)}
+              >
+                Configurar Outlook
+              </Button>
+            </div>
           </div>
         </div>
       </div>
+
+      <OutlookConfigModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        email={account.email}
+      />
     </motion.div>
   );
 }

@@ -34,6 +34,7 @@ export default function CorreosPage() {
     isInitialLoading,
     isRefreshing,
     refresh,
+    domainDnsHealth,
   } = useEmailDashboardData();
   const {
     hiddenEmails,
@@ -150,6 +151,7 @@ export default function CorreosPage() {
           onRestoreAccount={handleRestoreAccount}
           onClearHiddenAccounts={handleClearHiddenAccounts}
           onRetry={handleRefresh}
+          domainDnsHealth={domainDnsHealth}
         />
       </main>
     </div>
