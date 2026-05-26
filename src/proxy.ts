@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import maxmind, { type Reader, type Response } from "maxmind";
 import { promises as fs } from "fs";
+import {
+  getClientIp,
+  isEmailMonitorIpAllowed,
+  isEmailMonitorProtectedRoute,
+} from "@/lib/ip-access";
 
 type GeoLiteCountry = Response & {
   country?: {
@@ -47,27 +52,6 @@ function shouldBypass(pathname: string): boolean {
   return false;
 }
 
-function normalizeIp(raw: string | null): string | null {
-  if (!raw) return null;
-  const first = raw.split(",")[0]?.trim();
-  if (!first) return null;
-  if (first.startsWith("::ffff:")) return first.slice(7);
-
-  const ipv4WithPort = first.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/);
-  if (ipv4WithPort) return ipv4WithPort[1];
-
-  return first;
-}
-
-function getClientIp(request: NextRequest): string | null {
-  const candidate =
-    request.headers.get("x-forwarded-for") ??
-    request.headers.get("x-real-ip") ??
-    request.headers.get("x-vercel-forwarded-for");
-
-  return normalizeIp(candidate);
-}
-
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
@@ -98,6 +82,15 @@ export async function proxy(request: NextRequest) {
       console.warn("⚠️ ALERTA: Base de datos MaxMind no encontrada en Producción. Bloqueando por seguridad.");
       return NextResponse.rewrite(rewriteUrl);
     }
+    if (
+      isEmailMonitorProtectedRoute(pathname) &&
+      !isEmailMonitorIpAllowed(clientIp)
+    ) {
+      console.log(
+        `🚫 Bloqueado módulo correos: IP ${clientIp ?? "desconocida"} no autorizada`,
+      );
+      return NextResponse.rewrite(rewriteUrl);
+    }
     return NextResponse.next();
   }
 
@@ -106,6 +99,15 @@ export async function proxy(request: NextRequest) {
       // Ignorar localhost para que no bloquee el desarrollo
       if (clientIp === "::1" || clientIp === "127.0.0.1") {
         console.log("🛠 [Dev] IP local detectada (localhost). Permitiendo acceso por defecto.");
+        if (
+          isEmailMonitorProtectedRoute(pathname) &&
+          !isEmailMonitorIpAllowed(clientIp)
+        ) {
+          console.log(
+            `🚫 Bloqueado módulo correos: IP ${clientIp ?? "desconocida"} no autorizada`,
+          );
+          return NextResponse.rewrite(rewriteUrl);
+        }
         return NextResponse.next();
       }
 
@@ -132,6 +134,16 @@ export async function proxy(request: NextRequest) {
       console.error("Error validando IP con MaxMind:", error);
       return NextResponse.rewrite(rewriteUrl);
     }
+  }
+
+  if (
+    isEmailMonitorProtectedRoute(pathname) &&
+    !isEmailMonitorIpAllowed(clientIp)
+  ) {
+    console.log(
+      `🚫 Bloqueado módulo correos: IP ${clientIp ?? "desconocida"} no autorizada`,
+    );
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   return NextResponse.next();
