@@ -14,6 +14,7 @@ export interface EmailAccountQuota {
   suspendedOutgoing: boolean;
   healthScore?: number;
   healthStatus?: "excellent" | "good" | "warning" | "critical";
+  healthReasons?: string[];
 }
 
 export interface EmailStats {

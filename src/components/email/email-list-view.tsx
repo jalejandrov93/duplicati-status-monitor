@@ -4,12 +4,24 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { formatBytes } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
-import { EyeOff, Settings, ShieldAlert } from "lucide-react";
+import { EyeOff, Settings, ShieldAlert, MoreVertical } from "lucide-react";
 import {
   EmailStatusBadge,
   getEmailStatusConfig,
 } from "@/components/email/email-status-badge";
 import { OutlookConfigModal } from "@/components/email/outlook-config-modal";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 interface EmailListViewProps {
   accounts: EmailAccountQuota[];
@@ -31,7 +43,7 @@ function EmailRow({
     <>
       <li
         className={cn(
-          "grid gap-3 px-4 py-4 md:grid-cols-[minmax(0,2fr)_120px_100px_160px_140px_100px_48px] md:items-center md:gap-4",
+          "grid gap-3 px-4 py-4 md:grid-cols-[minmax(0,2fr)_120px_100px_160px_140px_80px] md:items-center md:gap-4",
           "border-l-4",
           account.status === "SUCCESS"
             ? "border-l-green-500"
@@ -54,9 +66,33 @@ function EmailRow({
           <div className="mt-2 flex flex-wrap gap-1.5 md:hidden">
             <EmailStatusBadge status={account.status} />
             {account.healthScore !== undefined && (
-              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">
-                Salud: {account.healthScore}/100
-              </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-semibold cursor-help">
+                      Salud: {account.healthScore}/100
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="center" className="max-w-[280px] p-3 border bg-popover text-popover-foreground shadow-lg rounded-xl z-50">
+                    <div className="space-y-1.5">
+                      <p className="font-semibold text-xs">
+                        Estado: <span className="capitalize">{account.healthStatus}</span>
+                      </p>
+                      {account.healthReasons && account.healthReasons.length > 0 ? (
+                        <ul className="list-disc pl-4 space-y-1 text-[11px] text-muted-foreground">
+                          {account.healthReasons.map((reason, idx) => (
+                            <li key={idx} className="leading-tight">{reason}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground leading-tight">
+                          La cuenta está en excelente estado. No se detectan problemas de DNS, spam o almacenamiento.
+                        </p>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         </div>
@@ -69,18 +105,42 @@ function EmailRow({
         {/* Salud Column */}
         <div className="hidden text-sm md:block">
           {account.healthScore !== undefined ? (
-            <span
-              className={cn(
-                "font-bold",
-                account.healthStatus === "excellent" && "text-green-500",
-                account.healthStatus === "good" && "text-green-400",
-                account.healthStatus === "warning" && "text-yellow-500",
-                account.healthStatus === "critical" &&
-                  "text-red-500 animate-pulse",
-              )}
-            >
-              {account.healthScore}/100
-            </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={cn(
+                      "font-bold cursor-help underline decoration-dotted decoration-muted-foreground/50",
+                      account.healthStatus === "excellent" && "text-green-500",
+                      account.healthStatus === "good" && "text-green-400",
+                      account.healthStatus === "warning" && "text-yellow-500",
+                      account.healthStatus === "critical" &&
+                        "text-red-500 animate-pulse",
+                    )}
+                  >
+                    {account.healthScore}/100
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="center" className="max-w-[280px] p-3 border bg-popover text-popover-foreground shadow-lg rounded-xl z-50">
+                  <div className="space-y-1.5">
+                    <p className="font-semibold text-xs">
+                      Estado: <span className="capitalize">{account.healthStatus}</span>
+                    </p>
+                    {account.healthReasons && account.healthReasons.length > 0 ? (
+                      <ul className="list-disc pl-4 space-y-1 text-[11px] text-muted-foreground">
+                        {account.healthReasons.map((reason, idx) => (
+                          <li key={idx} className="leading-tight">{reason}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground leading-tight">
+                        La cuenta está en excelente estado. No se detectan problemas de DNS, spam o almacenamiento.
+                      </p>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : (
             <span className="text-muted-foreground">-</span>
           )}
@@ -107,42 +167,37 @@ function EmailRow({
             : " · Cuota ilimitada"}
         </p>
 
-        {/* Config Column */}
-        <div className="hidden md:block">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1 border bg-muted/20 hover:bg-muted/40 rounded-xl text-xs"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <Settings className="h-3 w-3" />
-            Config
-          </Button>
-        </div>
-
         {/* Acciones Column */}
-        <div className="flex justify-end gap-2 md:justify-center">
-          <div className="md:hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs gap-1"
-              onClick={() => setIsModalOpen(true)}
-            >
-              Config
-            </Button>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full"
-            onClick={() => onHideAccount(account.email)}
-            aria-label={`Omitir cuenta ${account.email}`}
-            title="Omitir cuenta"
-          >
-            <EyeOff className="h-4 w-4" />
-          </Button>
+        <div className="flex justify-end pr-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full hover:bg-muted/80"
+                aria-label={`Acciones para ${account.email}`}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 rounded-xl border-border bg-card p-1 shadow-md z-50">
+              <DropdownMenuItem
+                onClick={() => setIsModalOpen(true)}
+                className="cursor-pointer gap-2 rounded-lg text-xs font-medium hover:bg-muted"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                Configurar Outlook
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onHideAccount(account.email)}
+                className="cursor-pointer gap-2 rounded-lg text-xs font-medium text-destructive focus:text-destructive focus:bg-destructive/10 hover:bg-destructive/10"
+              >
+                <EyeOff className="h-3.5 w-3.5" />
+                Omitir cuenta
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </li>
 
@@ -158,14 +213,13 @@ function EmailRow({
 export function EmailListView({ accounts, onHideAccount }: EmailListViewProps) {
   return (
     <div className="overflow-hidden rounded-xl border bg-card/50 backdrop-blur-sm shadow-sm">
-      <div className="hidden grid-cols-[minmax(0,2fr)_120px_100px_160px_140px_100px_48px] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+      <div className="hidden grid-cols-[minmax(0,2fr)_120px_100px_160px_140px_80px] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
         <span>Cuenta</span>
         <span>Estado</span>
         <span>Salud</span>
         <span>Uso</span>
         <span>Espacio</span>
-        <span>Config</span>
-        <span className="sr-only">Acciones</span>
+        <span className="text-right pr-4">Acciones</span>
       </div>
 
       <ul className="divide-y">

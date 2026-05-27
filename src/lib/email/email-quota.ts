@@ -120,6 +120,7 @@ export async function getEmailDashboardData(): Promise<EmailDashboardResponse> {
     const health = calculateAccountHealth(account, dnsHealth);
     account.healthScore = health.score;
     account.healthStatus = health.status;
+    account.healthReasons = health.reasons;
 
     if (health.status === "critical") {
       const suspension = await evaluateAndSuspendIfCritical(account, health);
@@ -132,6 +133,7 @@ export async function getEmailDashboardData(): Promise<EmailDashboardResponse> {
         const updatedHealth = calculateAccountHealth(account, dnsHealth);
         account.healthScore = updatedHealth.score;
         account.healthStatus = updatedHealth.status;
+        account.healthReasons = updatedHealth.reasons;
       }
     }
   }

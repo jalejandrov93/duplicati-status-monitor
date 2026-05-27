@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   X,
@@ -40,7 +41,12 @@ export function OutlookConfigModal({
   onClose,
   email,
 }: OutlookConfigModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [config, setConfig] = useState<ClientSettings | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -83,7 +89,9 @@ export function OutlookConfigModal({
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -377,6 +385,7 @@ export function OutlookConfigModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
