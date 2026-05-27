@@ -1,6 +1,11 @@
 import dns from "dns";
 
-const dnsPromises = dns.promises;
+const resolver = new dns.promises.Resolver();
+try {
+  resolver.setServers(["1.1.1.1", "8.8.8.8"]);
+} catch (e) {
+  console.error("Error setting custom DNS servers, using system default:", e);
+}
 
 export interface DnsHealthResult {
   spf: {
@@ -33,7 +38,7 @@ async function checkIpInDnsbl(ip: string, dnsbl: string): Promise<boolean> {
   const reversedIp = ip.split(".").reverse().join(".");
   const query = `${reversedIp}.${dnsbl}`;
   try {
-    const addresses = await dnsPromises.resolve4(query);
+    const addresses = await resolver.resolve4(query);
     return addresses.length > 0;
   } catch {
     // ENOTFOUND means not listed
@@ -53,7 +58,7 @@ export async function checkDnsHealth(domain: string): Promise<DnsHealthResult> {
 
   // 1. SPF Check
   try {
-    const txtRecords = await dnsPromises.resolveTxt(domain);
+    const txtRecords = await resolver.resolveTxt(domain);
     const spfRecord = txtRecords.flat().find((r) => r.startsWith("v=spf1"));
     if (spfRecord) {
       result.spf.record = spfRecord;
@@ -65,7 +70,7 @@ export async function checkDnsHealth(domain: string): Promise<DnsHealthResult> {
 
   // 2. DMARC Check
   try {
-    const txtRecords = await dnsPromises.resolveTxt(`_dmarc.${domain}`);
+    const txtRecords = await resolver.resolveTxt(`_dmarc.${domain}`);
     const dmarcRecord = txtRecords.flat().find((r) => r.startsWith("v=DMARC1"));
     if (dmarcRecord) {
       result.dmarc.record = dmarcRecord;
@@ -79,7 +84,7 @@ export async function checkDnsHealth(domain: string): Promise<DnsHealthResult> {
   const selectors = ["default", "cpanel"];
   for (const selector of selectors) {
     try {
-      const txtRecords = await dnsPromises.resolveTxt(
+      const txtRecords = await resolver.resolveTxt(
         `${selector}._domainkey.${domain}`,
       );
       const dkimRecord = txtRecords
@@ -98,12 +103,12 @@ export async function checkDnsHealth(domain: string): Promise<DnsHealthResult> {
 
   // 4. Blacklist Check para IPs de MX
   try {
-    const mxRecords = await dnsPromises.resolveMx(domain);
+    const mxRecords = await resolver.resolveMx(domain);
     const ipsToCheck = new Set<string>();
 
     for (const mx of mxRecords) {
       try {
-        const addresses = await dnsPromises.resolve4(mx.exchange);
+        const addresses = await resolver.resolve4(mx.exchange);
         for (const addr of addresses) {
           ipsToCheck.add(addr);
         }
@@ -114,7 +119,7 @@ export async function checkDnsHealth(domain: string): Promise<DnsHealthResult> {
 
     if (ipsToCheck.size === 0) {
       try {
-        const addresses = await dnsPromises.resolve4(domain);
+        const addresses = await resolver.resolve4(domain);
         for (const addr of addresses) {
           ipsToCheck.add(addr);
         }
