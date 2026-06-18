@@ -10,7 +10,8 @@
     "test:db": "node ./scripts/test-connection.js",
     "test:demo": "node ./scripts/demo.js",
     "test:mongoose": "node ./scripts/test-mongodb-native.js",
-    "diagnostico": "node ./scripts/diagnostico-completo.js"
+    "diagnostico": "node ./scripts/diagnostico-completo.js",
+    "seed": "node ./scripts/seed-mock-data.js"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
