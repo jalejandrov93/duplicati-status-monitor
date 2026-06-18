@@ -11,10 +11,12 @@ import {
   Sun,
   RefreshCw,
   Command as CommandIcon,
+  AtSign,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
+import { useEmailDashboardData } from "@/hooks/use-email-dashboard-data";
 import { cn } from "@/lib/utils";
 import { getStatusConfig } from "@/lib/status-utils";
 
@@ -24,8 +26,12 @@ export function CommandMenu() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { machines, refresh, isRefreshing } = useDashboardData([]);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Data hooks
+  const { machines, refresh: refreshMachines, isRefreshing: isRefreshingMachines } = useDashboardData([]);
+  const { accounts, refresh: refreshEmails, isRefreshing: isRefreshingEmails } = useEmailDashboardData();
+
+  const isRefreshing = isRefreshingMachines || isRefreshingEmails;
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -48,10 +54,16 @@ export function CommandMenu() {
   }, []);
 
   const filteredMachines = query === ""
-    ? machines.slice(0, 5)
+    ? machines.slice(0, 3)
     : machines.filter((machine) =>
         machine.machineName.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 10);
+      ).slice(0, 5);
+
+  const filteredEmails = query === ""
+    ? accounts.slice(0, 3)
+    : accounts.filter((account) =>
+        account.email.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 5);
 
   const navigationItems = [
     { icon: <LayoutDashboard className="h-4 w-4" />, label: "Dashboard Principal", action: () => router.push("/") },
@@ -66,8 +78,8 @@ export function CommandMenu() {
     },
     {
       icon: <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />,
-      label: "Actualizar datos ahora",
-      action: () => refresh()
+      label: "Actualizar todos los datos",
+      action: () => { refreshMachines(); refreshEmails(); }
     },
   ];
 
@@ -75,10 +87,19 @@ export function CommandMenu() {
     icon: <Monitor className={cn("h-4 w-4", getStatusConfig(m.latestBackup.Status).iconColor)} />,
     label: m.machineName,
     badge: m.latestBackup.Status,
+    type: "Máquina",
     action: () => router.push(`/machine/${encodeURIComponent(m.machineName)}`)
   }));
 
-  const allItems = [...navigationItems, ...machineItems, ...systemItems];
+  const emailItems = filteredEmails.map(e => ({
+    icon: <AtSign className={cn("h-4 w-4", e.status === "ERROR" ? "text-destructive" : e.status === "WARNING" ? "text-yellow-500" : "text-green-500")} />,
+    label: e.email,
+    badge: e.status,
+    type: "Correo",
+    action: () => router.push("/correos") // Currently we don't have individual email pages, but we go to the dashboard
+  }));
+
+  const allItems = [...navigationItems, ...machineItems, ...emailItems, ...systemItems];
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -134,7 +155,7 @@ export function CommandMenu() {
               <Search className="mr-3 h-5 w-5 shrink-0 text-muted-foreground" />
               <input
                 autoFocus
-                placeholder="Escribe un comando o busca una máquina..."
+                placeholder="Busca máquinas, correos o comandos..."
                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -145,7 +166,6 @@ export function CommandMenu() {
             </div>
 
             <div
-              ref={scrollContainerRef}
               className="max-h-[60vh] overflow-y-auto p-2 scrollbar-thin"
               role="listbox"
             >
@@ -182,6 +202,25 @@ export function CommandMenu() {
                 </>
               )}
 
+              {/* Correos */}
+              {emailItems.length > 0 && (
+                <>
+                  <div className="mt-4 mb-2 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Correos
+                  </div>
+                  {emailItems.map((item, i) => (
+                    <CommandItem
+                      key={item.label}
+                      active={selectedIndex === i + navigationItems.length + machineItems.length}
+                      icon={item.icon}
+                      label={item.label}
+                      badge={item.badge}
+                      onClick={() => runCommand(item.action)}
+                    />
+                  ))}
+                </>
+              )}
+
               {/* Sistema */}
               <div className="mt-4 mb-2 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Sistema
@@ -189,7 +228,7 @@ export function CommandMenu() {
               {systemItems.map((item, i) => (
                 <CommandItem
                   key={item.label}
-                  active={selectedIndex === i + navigationItems.length + machineItems.length}
+                  active={selectedIndex === i + navigationItems.length + machineItems.length + emailItems.length}
                   icon={item.icon}
                   label={item.label}
                   onClick={() => runCommand(item.action)}
@@ -247,7 +286,7 @@ function CommandItem({
       )}>
         {icon}
       </div>
-      <span className="flex-1 text-left font-medium">{label}</span>
+      <span className="flex-1 text-left font-medium truncate">{label}</span>
       {badge && (
         <span className={cn(
           "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
