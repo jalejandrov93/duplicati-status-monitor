@@ -9,6 +9,7 @@ const BackupCharts = dynamic(
   () => import("@/components/backup-charts").then((mod) => mod.BackupCharts),
   { ssr: false, loading: () => <div className="h-[300px] w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" /> }
 );
+import { ActivityCalendar } from "@/components/machine-detail/activity-calendar";
 import {
   MachineMetricCard,
   MachineQuotaCard,
@@ -142,6 +143,9 @@ export default function MachineDetailPage({
             />
           )}
         </div>
+
+        {/* Activity Calendar */}
+        <ActivityCalendar recentBackups={data.recentBackups} />
 
         {/* Charts */}
         <BackupCharts
