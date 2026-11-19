@@ -11,10 +11,11 @@ function fetchEmailDashboard(): Promise<EmailDashboardResponse> {
   return fetchApi<EmailDashboardResponse>("/api/emails");
 }
 
-export function useEmailDashboardData() {
+export function useEmailDashboardData({ enabled = true }: { enabled?: boolean } = {}) {
   const query = useQuery({
     queryKey: ["email-dashboard"],
     queryFn: fetchEmailDashboard,
+    enabled,
     refetchInterval: EMAIL_DASHBOARD_REFRESH_INTERVAL_MS,
     refetchIntervalInBackground: false,
     // One fetch when entering the module; afterwards only the interval or the

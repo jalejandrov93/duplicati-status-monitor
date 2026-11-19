@@ -29,7 +29,7 @@ export function CommandMenu() {
 
   // Data hooks
   const { machines, refresh: refreshMachines, isRefreshing: isRefreshingMachines } = useDashboardData([]);
-  const { accounts, refresh: refreshEmails, isRefreshing: isRefreshingEmails } = useEmailDashboardData();
+  const { accounts, refresh: refreshEmails, isRefreshing: isRefreshingEmails } = useEmailDashboardData({ enabled: open });
 
   const isRefreshing = isRefreshingMachines || isRefreshingEmails;
 
@@ -84,9 +84,9 @@ export function CommandMenu() {
   ];
 
   const machineItems = filteredMachines.map(m => ({
-    icon: <Monitor className={cn("h-4 w-4", getStatusConfig(m.latestBackup.Status).iconColor)} />,
+    icon: <Monitor className={cn("h-4 w-4", getStatusConfig(m.latestBackup?.Status).iconColor)} />,
     label: m.machineName,
-    badge: m.latestBackup.Status,
+    badge: m.latestBackup?.Status,
     type: "Máquina",
     action: () => router.push(`/machine/${encodeURIComponent(m.machineName)}`)
   }));
