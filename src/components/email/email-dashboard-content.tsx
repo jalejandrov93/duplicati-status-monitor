@@ -123,7 +123,9 @@ export function EmailDashboardContent({
       <>
         <div className="z-20 mb-4 flex items-center justify-end gap-2 text-xs text-muted-foreground">
           <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
-          <span>Actualizando cada {Math.floor(refreshIntervalMs / 1000)}s</span>
+          <span>
+            Actualizando cada {Math.round(refreshIntervalMs / 60000)} min
+          </span>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
